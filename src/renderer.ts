@@ -1,4 +1,5 @@
-import { ProgramManager } from "./program";
+import { createProgram } from "./program";
+import type { ProgramData, AttributesDeclaration, UniformsDeclaration } from "./program";
 
 type RendererConfig = {
   clearColor: {
@@ -20,7 +21,6 @@ const DEFAULT_RENDERER_CONFIG: RendererConfig = {
 class Renderer {
   readonly canvas: HTMLCanvasElement;
   readonly gl: WebGL2RenderingContext;
-  readonly program: ProgramManager;
 
   constructor({ clearColor }: RendererConfig = DEFAULT_RENDERER_CONFIG) {
     this.canvas = document.createElement("canvas");
@@ -32,9 +32,12 @@ class Renderer {
 
     this.gl = gl;
 
-    this.program = new ProgramManager(gl);
     gl.clearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a ?? 1.0);
     document.body.appendChild(this.canvas);
+  }
+
+  createProgram<A extends AttributesDeclaration, U extends UniformsDeclaration>(programData: ProgramData<A, U>) {
+    return createProgram(this.gl, programData);
   }
 
   clearScreen() {

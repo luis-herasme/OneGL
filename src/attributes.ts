@@ -46,47 +46,40 @@ export const WEBGL_TO_ATTRIBUTE_TYPE = {
   [FLOAT_MAT4]: "mat4",
 } as const;
 
+export function getAttributeTypeLabel(type: number) {
+  const webglType = WEBGL_TO_ATTRIBUTE_TYPE[type as keyof typeof WEBGL_TO_ATTRIBUTE_TYPE];
+
+  if (!webglType) {
+    throw new Error(`Unsupported attribute type: ${type}`);
+  }
+
+  return webglType;
+}
+
 export type AttributeTypeMap = {
   float: Float32Array;
   vec2: Float32Array;
   vec3: Float32Array;
   vec4: Float32Array;
 
-  int: number;
-  ivec2: [number, number];
-  ivec3: [number, number, number];
-  ivec4: [number, number, number, number];
+  int: Int32Array;
+  ivec2: Int32Array;
+  ivec3: Int32Array;
+  ivec4: Int32Array;
 
-  uint: number;
-  uvec2: [number, number];
-  uvec3: [number, number, number];
-  uvec4: [number, number, number, number];
+  uint: Uint32Array;
+  uvec2: Uint32Array;
+  uvec3: Uint32Array;
+  uvec4: Uint32Array;
 
-  bool: boolean;
-  bvec2: [boolean, boolean];
-  bvec3: [boolean, boolean, boolean];
-  bvec4: [boolean, boolean, boolean, boolean];
+  bool: Uint32Array;
+  bvec2: Uint32Array;
+  bvec3: Uint32Array;
+  bvec4: Uint32Array;
 
-  mat2: [number, number, number, number];
-  mat3: [number, number, number, number, number, number, number, number, number];
-  mat4: [
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number
-  ];
+  mat2: Float32Array;
+  mat3: Float32Array;
+  mat4: Float32Array;
 };
 
 export type AttributeTypeLabel = keyof AttributeTypeMap;
@@ -103,6 +96,16 @@ export const ATTRIBUTE_SETTERS = {
   [INT_VEC3]: intAttribSetterGenerator(3),
   [INT_VEC4]: intAttribSetterGenerator(4),
 } as const;
+
+export function getAttributeSetter(type: number) {
+  const setter = ATTRIBUTE_SETTERS[type as keyof typeof ATTRIBUTE_SETTERS];
+
+  if (!setter) {
+    throw new Error(`Unsupported attribute type: ${type}`);
+  }
+
+  return setter;
+}
 
 export type BufferOptions = {
   buffer: WebGLBuffer;

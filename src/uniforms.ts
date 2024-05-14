@@ -22,6 +22,9 @@ const FLOAT_MAT2 = 0x8b5a;
 const FLOAT_MAT3 = 0x8b5b;
 const FLOAT_MAT4 = 0x8b5c;
 
+export type GetUniformType<T extends UniformTypeLabel> = UniformTypeMap[T];
+export type UniformTypeLabel = keyof UniformTypeMap;
+
 export type UniformTypeMap = {
   float: number;
   vec2: [number, number];
@@ -65,8 +68,31 @@ export type UniformTypeMap = {
   ];
 };
 
-export type GetUniformType<T extends UniformTypeLabel> = UniformTypeMap[T];
-export type UniformTypeLabel = keyof UniformTypeMap;
+export const UNIFORM_SETTERS = {
+  [FLOAT]: floatSetter,
+  [FLOAT_VEC2]: floatVec2Setter,
+  [FLOAT_VEC3]: floatVec3Setter,
+  [FLOAT_VEC4]: floatVec4Setter,
+
+  [INT]: intSetter,
+  [INT_VEC2]: intVec2Setter,
+  [INT_VEC3]: intVec3Setter,
+  [INT_VEC4]: intVec4Setter,
+
+  [UNSIGNED_INT]: uintSetter,
+  [UNSIGNED_INT_VEC2]: uintVec2Setter,
+  [UNSIGNED_INT_VEC3]: uintVec3Setter,
+  [UNSIGNED_INT_VEC4]: uintVec4Setter,
+
+  [BOOL]: boolSetter,
+  [BOOL_VEC2]: boolVec2Setter,
+  [BOOL_VEC3]: boolVec3Setter,
+  [BOOL_VEC4]: boolVec4Setter,
+
+  [FLOAT_MAT2]: floatMat2Setter,
+  [FLOAT_MAT3]: floatMat3Setter,
+  [FLOAT_MAT4]: floatMat4Setter,
+} as const;
 
 export const WEBGL_TO_UNIFORM_TYPE = {
   [FLOAT]: "float",
@@ -90,31 +116,25 @@ export const WEBGL_TO_UNIFORM_TYPE = {
   [FLOAT_MAT4]: "mat4",
 } as const;
 
-export const UNIFORM_SETTERS = {
-  [FLOAT]: floatSetter,
-  [FLOAT_VEC2]: floatVec2Setter,
-  [FLOAT_VEC3]: floatVec3Setter,
-  [FLOAT_VEC4]: floatVec4Setter,
+export function getUniformTypeLabel(type: number) {
+  const webglType = WEBGL_TO_UNIFORM_TYPE[type as keyof typeof WEBGL_TO_UNIFORM_TYPE];
 
-  [INT]: intSetter,
-  [INT_VEC2]: intVec2Setter,
-  [INT_VEC3]: intVec3Setter,
-  [INT_VEC4]: intVec4Setter,
+  if (!webglType) {
+    throw new Error(`Unsupported uniform type: ${type}`);
+  }
 
-  [UNSIGNED_INT]: uintSetter,
-  [UNSIGNED_INT_VEC2]: uintVec2Setter,
-  [UNSIGNED_INT_VEC3]: uintVec3Setter,
-  [UNSIGNED_INT_VEC4]: uintVec4Setter,
+  return webglType;
+}
 
-  [BOOL]: intSetter,
-  [BOOL_VEC2]: intVec2Setter,
-  [BOOL_VEC3]: intVec3Setter,
-  [BOOL_VEC4]: intVec4Setter,
+export function getUniformSetter(type: number) {
+  const setter = UNIFORM_SETTERS[type as keyof typeof UNIFORM_SETTERS];
 
-  [FLOAT_MAT2]: floatMat2Setter,
-  [FLOAT_MAT3]: floatMat3Setter,
-  [FLOAT_MAT4]: floatMat4Setter,
-} as const;
+  if (!setter) {
+    throw new Error(`Unsupported uniform type: ${type}`);
+  }
+
+  return setter;
+}
 
 function floatSetter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
   return function (v: number) {
@@ -123,19 +143,19 @@ function floatSetter(gl: WebGL2RenderingContext, location: WebGLUniformLocation)
 }
 
 function floatVec2Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number]) {
     gl.uniform2fv(location, v);
   };
 }
 
 function floatVec3Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number, number]) {
     gl.uniform3fv(location, v);
   };
 }
 
 function floatVec4Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number, number, number]) {
     gl.uniform4fv(location, v);
   };
 }
@@ -146,20 +166,44 @@ function intSetter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
   };
 }
 
+function boolSetter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
+  return function (v: boolean) {
+    gl.uniform1i(location, v as unknown as number);
+  };
+}
+
+function boolVec2Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
+  return function (v: [boolean, boolean]) {
+    gl.uniform2iv(location, v as unknown as [number, number]);
+  };
+}
+
+function boolVec3Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
+  return function (v: [boolean, boolean, boolean]) {
+    gl.uniform3iv(location, v as unknown as [number, number, number]);
+  };
+}
+
+function boolVec4Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
+  return function (v: [boolean, boolean, boolean, boolean]) {
+    gl.uniform4iv(location, v as unknown as [number, number, number, number]);
+  };
+}
+
 function intVec2Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number]) {
     gl.uniform2iv(location, v);
   };
 }
 
 function intVec3Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number, number]) {
     gl.uniform3iv(location, v);
   };
 }
 
 function intVec4Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number, number, number]) {
     gl.uniform4iv(location, v);
   };
 }
@@ -171,37 +215,56 @@ function uintSetter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) 
 }
 
 function uintVec2Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number]) {
     gl.uniform2uiv(location, v);
   };
 }
 
 function uintVec3Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number, number]) {
     gl.uniform3uiv(location, v);
   };
 }
 
 function uintVec4Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number, number, number]) {
     gl.uniform4uiv(location, v);
   };
 }
 
 function floatMat2Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number, number, number]) {
     gl.uniformMatrix2fv(location, false, v);
   };
 }
 
 function floatMat3Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (v: [number, number, number, number, number, number, number, number, number]) {
     gl.uniformMatrix3fv(location, false, v);
   };
 }
 
 function floatMat4Setter(gl: WebGL2RenderingContext, location: WebGLUniformLocation) {
-  return function (v: Iterable<number>) {
+  return function (
+    v: [
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number
+    ]
+  ) {
     gl.uniformMatrix4fv(location, false, v);
   };
 }
