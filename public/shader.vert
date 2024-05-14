@@ -1,8 +1,12 @@
 #version 300 es
 
 in vec2 aPosition;
-uniform vec2 uResolution;
+uniform mat3 uMatrix;
+uniform vec4 uColor;
+
+out vec4 vColor;
 
 void main() {
-    gl_Position = vec4((aPosition / uResolution) * 2.0f - 1.0f, 0, 1);
+    gl_Position = vec4((uMatrix * vec3(aPosition, 1)).xy, 0.0f, 1.0f);
+    vColor = uColor;
 }
