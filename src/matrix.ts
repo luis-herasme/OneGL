@@ -1,6 +1,30 @@
 type MatrixData = [number, number, number, number, number, number, number, number, number];
 
+const IDENTITY: MatrixData = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+
 export class Matrix {
+  data: MatrixData;
+
+  constructor(data: MatrixData = IDENTITY) {
+    this.data = data;
+  }
+
+  rotate(angleInRadians: number): void {
+    this.data = Matrix.rotate(this.data, angleInRadians);
+  }
+
+  scale(sx: number, sy: number): void {
+    this.data = Matrix.scale(this.data, sx, sy);
+  }
+
+  translate(tx: number, ty: number): void {
+    this.data = Matrix.translate(this.data, tx, ty);
+  }
+
+  static identity(): MatrixData {
+    return IDENTITY;
+  }
+
   static projection(width: number, height: number): MatrixData {
     return [2 / width, 0, 0, 0, -2 / height, 0, -1, 1, 1];
   }
