@@ -1,5 +1,3 @@
-import { ARRAY_BUFFER } from "./constants";
-
 const FLOAT = 0x1406;
 const FLOAT_VEC2 = 0x8b50;
 const FLOAT_VEC3 = 0x8b51;
@@ -118,7 +116,7 @@ export type BufferOptions = {
 function floatAttribSetterGenerator(size: number) {
   return function floatAttribSetterCreator(gl: WebGL2RenderingContext, index: number) {
     return function floatAttribSetter(value: BufferOptions) {
-      gl.bindBuffer(ARRAY_BUFFER, value.buffer);
+      gl.bindBuffer(gl.ARRAY_BUFFER, value.buffer);
       gl.enableVertexAttribArray(index);
       gl.vertexAttribPointer(index, size, FLOAT, value.normalize || false, value.stride || 0, value.offset || 0);
 
@@ -132,7 +130,7 @@ function floatAttribSetterGenerator(size: number) {
 function intAttribSetterGenerator(size: number) {
   return function intAttribSetterCreator(gl: WebGL2RenderingContext, index: number) {
     return function intAttribSetter(value: BufferOptions) {
-      gl.bindBuffer(ARRAY_BUFFER, value.buffer);
+      gl.bindBuffer(gl.ARRAY_BUFFER, value.buffer);
       gl.enableVertexAttribArray(index);
       gl.vertexAttribIPointer(index, size, INT, value.stride || 0, value.offset || 0);
 
