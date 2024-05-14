@@ -46,13 +46,15 @@ class Renderer {
   }
 
   resizeCanvasToDisplaySize() {
-    const width = this.canvas.clientWidth;
-    const height = this.canvas.clientHeight;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
     if (this.canvas.width !== width || this.canvas.height !== height) {
       this.canvas.width = width;
       this.canvas.height = height;
     }
+
+    this.gl.viewport(0, 0, width, height);
   }
 }
 
