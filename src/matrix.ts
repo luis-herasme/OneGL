@@ -1,24 +1,25 @@
+type MatrixData = [number, number, number, number, number, number, number, number, number];
+
 export class Matrix {
-  static projection(width: number, height: number) {
-    // Note: This matrix flips the Y axis so that 0 is at the top.
+  static projection(width: number, height: number): MatrixData {
     return [2 / width, 0, 0, 0, -2 / height, 0, -1, 1, 1];
   }
 
-  static translation(tx: number, ty: number) {
+  static translation(tx: number, ty: number): MatrixData {
     return [1, 0, 0, 0, 1, 0, tx, ty, 1];
   }
 
-  static rotation(angleInRadians: number) {
+  static rotation(angleInRadians: number): MatrixData {
     const c = Math.cos(angleInRadians);
     const s = Math.sin(angleInRadians);
     return [c, -s, 0, s, c, 0, 0, 0, 1];
   }
 
-  static scaling(sx: number, sy: number) {
+  static scaling(sx: number, sy: number): MatrixData {
     return [sx, 0, 0, 0, sy, 0, 0, 0, 1];
   }
 
-  static multiply(a: number[], b: number[]): number[] {
+  static multiply(a: MatrixData, b: MatrixData): MatrixData {
     const a00 = a[0 * 3 + 0];
     const a01 = a[0 * 3 + 1];
     const a02 = a[0 * 3 + 2];
@@ -51,15 +52,15 @@ export class Matrix {
     ];
   }
 
-  static translate(m: number[], tx: number, ty: number) {
+  static translate(m: MatrixData, tx: number, ty: number): MatrixData {
     return Matrix.multiply(m, Matrix.translation(tx, ty));
   }
 
-  static rotate(m: number[], angleInRadians: number) {
+  static rotate(m: MatrixData, angleInRadians: number): MatrixData {
     return Matrix.multiply(m, Matrix.rotation(angleInRadians));
   }
 
-  static scale(m: number[], sx: number, sy: number) {
+  static scale(m: MatrixData, sx: number, sy: number): MatrixData {
     return Matrix.multiply(m, Matrix.scaling(sx, sy));
   }
 }
