@@ -1,11 +1,9 @@
 type MatrixData = [number, number, number, number, number, number, number, number, number];
 
-const IDENTITY: MatrixData = [1, 0, 0, 0, 1, 0, 0, 0, 1];
-
 export class Matrix {
   data: MatrixData;
 
-  constructor(data: MatrixData = IDENTITY) {
+  constructor(data: MatrixData = [1, 0, 0, 0, 1, 0, 0, 0, 1]) {
     this.data = data;
   }
 
@@ -22,7 +20,7 @@ export class Matrix {
   }
 
   static identity(): MatrixData {
-    return IDENTITY;
+    return [1, 0, 0, 0, 1, 0, 0, 0, 1];
   }
 
   static projection(width: number, height: number): MatrixData {
