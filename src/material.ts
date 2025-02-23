@@ -1,13 +1,10 @@
 import { GetUniformType, UniformTypeLabel, getUniformSetter, getUniformTypeLabel } from "./uniforms";
 import { AttributeTypeLabel, GetAttributeType, getAttributeSetter, getAttributeTypeLabel } from "./attributes";
 
-export type UniformsDeclaration = Record<string, UniformTypeLabel>;
-export type AttributesDeclaration = Record<string, AttributeTypeLabel>;
+export type Uniforms = Record<string, UniformTypeLabel>;
+export type Attributes = Record<string, AttributeTypeLabel>;
 
-type MaterialData<
-  A extends AttributesDeclaration = AttributesDeclaration,
-  U extends UniformsDeclaration = UniformsDeclaration
-> = {
+type MaterialData<A extends Attributes = Attributes, U extends Uniforms = Uniforms> = {
   gl: WebGL2RenderingContext;
   shader: {
     vertex: string;
@@ -17,10 +14,7 @@ type MaterialData<
   uniforms: U;
 };
 
-export class Material<
-  A extends AttributesDeclaration = AttributesDeclaration,
-  U extends UniformsDeclaration = UniformsDeclaration
-> {
+export class Material<A extends Attributes = Attributes, U extends Uniforms = Uniforms> {
   public readonly program: WebGLProgram;
 
   public readonly uniforms: {
@@ -46,7 +40,12 @@ export class Material<
   constructor(data: MaterialData<A, U>) {
     const { gl } = data;
 
-    const program = createWebGLProgram(gl, data);
+    const program = createWebGLProgram({
+      gl,
+      vertexSource: data.shader.vertex,
+      fragmentSource: data.shader.fragment,
+    });
+
     const uniforms = getUniforms(gl, program, data.uniforms);
     const attributes = getAttributes(gl, program, data.attributes);
 
@@ -59,23 +58,31 @@ export class Material<
   }
 }
 
-function createWebGLProgram(gl: WebGL2RenderingContext, data: MaterialData): WebGLProgram {
+function createWebGLProgram({
+  gl,
+  vertexSource,
+  fragmentSource,
+}: {
+  gl: WebGL2RenderingContext;
+  vertexSource: string;
+  fragmentSource: string;
+}): WebGLProgram {
   const program = gl.createProgram();
 
   if (!program) {
     throw new Error("Failed to create program");
   }
 
-  const vertex = createShader(gl, gl.VERTEX_SHADER, data.shader.vertex);
-  const fragment = createShader(gl, gl.FRAGMENT_SHADER, data.shader.fragment);
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
 
-  gl.attachShader(program, vertex);
-  gl.attachShader(program, fragment);
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
 
   gl.linkProgram(program);
 
-  gl.deleteShader(vertex);
-  gl.deleteShader(fragment);
+  gl.deleteShader(vertexShader);
+  gl.deleteShader(fragmentShader);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
     const log = gl.getProgramInfoLog(program);
@@ -115,7 +122,7 @@ function createShader(gl: WebGL2RenderingContext, type: number, source: string):
   return shader;
 }
 
-function getAttributes<A extends AttributesDeclaration>(
+function getAttributes<A extends Attributes>(
   gl: WebGL2RenderingContext,
   program: WebGLProgram,
   attributes: A
@@ -178,7 +185,7 @@ function getAttributes<A extends AttributesDeclaration>(
   };
 }
 
-function getUniforms<U extends UniformsDeclaration>(
+function getUniforms<U extends Uniforms>(
   gl: WebGL2RenderingContext,
   program: WebGLProgram,
   uniforms: U
