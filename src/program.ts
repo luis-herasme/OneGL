@@ -4,18 +4,21 @@ import { AttributeTypeLabel, GetAttributeType, getAttributeSetter, getAttributeT
 export type UniformsDeclaration = Record<string, UniformTypeLabel>;
 export type AttributesDeclaration = Record<string, AttributeTypeLabel>;
 
-export interface ProgramData<
+interface MaterialData<
   A extends AttributesDeclaration = AttributesDeclaration,
   U extends UniformsDeclaration = UniformsDeclaration
 > {
-  vertexShader: string;
-  fragmentShader: string;
+  gl: WebGL2RenderingContext;
+  shader: {
+    vertex: string;
+    fragment: string;
+  };
   attributes: A;
   uniforms: U;
 }
 
-export interface Program<A extends AttributesDeclaration, U extends UniformsDeclaration> {
-  webglProgram: WebGLProgram;
+export interface Material<A extends AttributesDeclaration, U extends UniformsDeclaration> {
+  program: WebGLProgram;
   uniforms: {
     locations: Record<keyof U, WebGLUniformLocation>;
     setters: {
@@ -31,44 +34,43 @@ export interface Program<A extends AttributesDeclaration, U extends UniformsDecl
   };
   setUniform: <K extends keyof U>(name: K, value: GetUniformType<U[K]>) => void;
   setAttribute: <K extends keyof A>(name: K, value: GetAttributeType<A[K]>) => void;
-  use: () => void;
 }
 
-export function createProgram<A extends AttributesDeclaration, U extends UniformsDeclaration>(
-  gl: WebGL2RenderingContext,
-  programData: ProgramData<A, U>
-): Program<A, U> {
-  const webglProgram = createWebGLProgram(gl, programData);
-  const attributes = getAttributes(gl, webglProgram, programData.attributes);
-  const uniforms = getUniforms(gl, webglProgram, programData.uniforms);
+export function Material<A extends AttributesDeclaration, U extends UniformsDeclaration>(
+  data: MaterialData<A, U>
+): Material<A, U> {
+  const { gl } = data;
+
+  const program = createWebGLProgram(gl, data);
+  const attributes = getAttributes(gl, program, data.attributes);
+  const uniforms = getUniforms(gl, program, data.uniforms);
 
   return {
-    webglProgram,
+    program,
     uniforms,
     attributes,
     setUniform: (name, value) => uniforms.setters[name](value),
     setAttribute: (name, value) => attributes.setters[name](value),
-    use: () => gl.useProgram(webglProgram),
   };
 }
 
-function createWebGLProgram(gl: WebGL2RenderingContext, programData: ProgramData): WebGLProgram {
+function createWebGLProgram(gl: WebGL2RenderingContext, programData: MaterialData): WebGLProgram {
   const program = gl.createProgram();
 
   if (!program) {
     throw new Error("Failed to create program");
   }
 
-  const vertexShader = createShader(gl, gl.VERTEX_SHADER, programData.vertexShader);
-  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, programData.fragmentShader);
+  const vertex = createShader(gl, gl.VERTEX_SHADER, programData.shader.vertex);
+  const fragment = createShader(gl, gl.FRAGMENT_SHADER, programData.shader.fragment);
 
-  gl.attachShader(program, vertexShader);
-  gl.attachShader(program, fragmentShader);
+  gl.attachShader(program, vertex);
+  gl.attachShader(program, fragment);
 
   gl.linkProgram(program);
 
-  gl.deleteShader(vertexShader);
-  gl.deleteShader(fragmentShader);
+  gl.deleteShader(vertex);
+  gl.deleteShader(fragment);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
     const log = gl.getProgramInfoLog(program);

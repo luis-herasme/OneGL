@@ -2,12 +2,16 @@ import { Matrix } from "./matrix";
 import Renderer from "./renderer";
 import { createQuad } from "./primitives";
 import { vertexShader, fragmentShader } from "./shaders";
+import { Material } from "./program";
 
 const renderer = new Renderer();
 
-const program = renderer.createProgram({
-  vertexShader,
-  fragmentShader,
+const material = Material({
+  gl: renderer.gl,
+  shader: {
+    vertex: vertexShader,
+    fragment: fragmentShader,
+  },
   attributes: {
     aPosition: "vec2",
   },
@@ -18,11 +22,14 @@ const program = renderer.createProgram({
   },
 });
 
-program.use();
-
-const quad = createQuad(100, 50);
+const quad = createQuad({
+  width: 100,
+  height: 50,
+});
 
 let angle = 0;
+
+renderer.gl.useProgram(material.program);
 
 function render() {
   renderer.resizeCanvasToDisplaySize();
@@ -35,11 +42,11 @@ function render() {
   transform.rotate(angle);
   transform.translate(-50, -25);
 
-  program.setUniform("uTransform", transform.data);
-  program.setUniform("uProjection", Matrix.projection(renderer.canvas.width, renderer.canvas.height));
-  program.setUniform("uColor", [1, 0, 0, 1]);
+  material.setUniform("uTransform", transform.data);
+  material.setUniform("uProjection", Matrix.projection(renderer.canvas.width, renderer.canvas.height));
+  material.setUniform("uColor", [1, 0, 0, 1]);
 
-  program.setAttribute("aPosition", quad);
+  material.setAttribute("aPosition", quad);
 
   renderer.gl.drawArrays(renderer.gl.TRIANGLES, 0, 6);
 

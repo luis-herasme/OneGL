@@ -1,6 +1,3 @@
-import { createProgram } from "./program";
-import type { ProgramData, AttributesDeclaration, UniformsDeclaration } from "./program";
-
 type RendererConfig = {
   clearColor: {
     r: number;
@@ -34,10 +31,6 @@ class Renderer {
 
     gl.clearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a ?? 1.0);
     document.body.appendChild(this.canvas);
-  }
-
-  createProgram<A extends AttributesDeclaration, U extends UniformsDeclaration>(programData: ProgramData<A, U>) {
-    return createProgram(this.gl, programData);
   }
 
   clearScreen() {
