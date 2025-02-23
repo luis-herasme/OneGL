@@ -42,8 +42,8 @@ export function Material<A extends AttributesDeclaration, U extends UniformsDecl
   const { gl } = data;
 
   const program = createWebGLProgram(gl, data);
-  const attributes = getAttributes(gl, program, data.attributes);
   const uniforms = getUniforms(gl, program, data.uniforms);
+  const attributes = getAttributes(gl, program, data.attributes);
 
   return {
     program,
@@ -54,15 +54,15 @@ export function Material<A extends AttributesDeclaration, U extends UniformsDecl
   };
 }
 
-function createWebGLProgram(gl: WebGL2RenderingContext, programData: MaterialData): WebGLProgram {
+function createWebGLProgram(gl: WebGL2RenderingContext, data: MaterialData): WebGLProgram {
   const program = gl.createProgram();
 
   if (!program) {
     throw new Error("Failed to create program");
   }
 
-  const vertex = createShader(gl, gl.VERTEX_SHADER, programData.shader.vertex);
-  const fragment = createShader(gl, gl.FRAGMENT_SHADER, programData.shader.fragment);
+  const vertex = createShader(gl, gl.VERTEX_SHADER, data.shader.vertex);
+  const fragment = createShader(gl, gl.FRAGMENT_SHADER, data.shader.fragment);
 
   gl.attachShader(program, vertex);
   gl.attachShader(program, fragment);
@@ -97,9 +97,8 @@ function createShader(gl: WebGL2RenderingContext, type: number, source: string):
   gl.compileShader(shader);
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    gl.deleteShader(shader);
-
     const log = gl.getShaderInfoLog(shader);
+    gl.deleteShader(shader);
 
     if (!log) {
       throw new Error("Failed to compile shader: no log available");
