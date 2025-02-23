@@ -42,24 +42,29 @@ export class Matrix {
   }
 
   static multiply(a: MatrixData, b: MatrixData): MatrixData {
-    const a00 = a[0 * 3 + 0];
-    const a01 = a[0 * 3 + 1];
-    const a02 = a[0 * 3 + 2];
-    const a10 = a[1 * 3 + 0];
-    const a11 = a[1 * 3 + 1];
-    const a12 = a[1 * 3 + 2];
-    const a20 = a[2 * 3 + 0];
-    const a21 = a[2 * 3 + 1];
-    const a22 = a[2 * 3 + 2];
-    const b00 = b[0 * 3 + 0];
-    const b01 = b[0 * 3 + 1];
-    const b02 = b[0 * 3 + 2];
-    const b10 = b[1 * 3 + 0];
-    const b11 = b[1 * 3 + 1];
-    const b12 = b[1 * 3 + 2];
-    const b20 = b[2 * 3 + 0];
-    const b21 = b[2 * 3 + 1];
-    const b22 = b[2 * 3 + 2];
+    const a00 = a[0];
+    const a01 = a[1];
+    const a02 = a[2];
+
+    const a10 = a[3];
+    const a11 = a[4];
+    const a12 = a[5];
+
+    const a20 = a[6];
+    const a21 = a[7];
+    const a22 = a[8];
+
+    const b00 = b[0];
+    const b01 = b[1];
+    const b02 = b[2];
+
+    const b10 = b[3];
+    const b11 = b[4];
+    const b12 = b[5];
+
+    const b20 = b[6];
+    const b21 = b[7];
+    const b22 = b[8];
 
     return [
       b00 * a00 + b01 * a10 + b02 * a20,
