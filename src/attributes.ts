@@ -119,10 +119,7 @@ function floatAttribSetterGenerator(size: number) {
       gl.bindBuffer(gl.ARRAY_BUFFER, value.buffer);
       gl.enableVertexAttribArray(index);
       gl.vertexAttribPointer(index, size, FLOAT, value.normalize || false, value.stride || 0, value.offset || 0);
-
-      if (gl.vertexAttribDivisor) {
-        gl.vertexAttribDivisor(index, value.divisor || 0);
-      }
+      gl.vertexAttribDivisor(index, value.divisor || 0);
     };
   };
 }
@@ -133,10 +130,7 @@ function intAttribSetterGenerator(size: number) {
       gl.bindBuffer(gl.ARRAY_BUFFER, value.buffer);
       gl.enableVertexAttribArray(index);
       gl.vertexAttribIPointer(index, size, INT, value.stride || 0, value.offset || 0);
-
-      if (gl.vertexAttribDivisor) {
-        gl.vertexAttribDivisor(index, value.divisor || 0);
-      }
+      gl.vertexAttribDivisor(index, value.divisor || 0);
     };
   };
 }
