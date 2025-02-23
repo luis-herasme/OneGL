@@ -1,31 +1,80 @@
-const FLOAT = 0x1406;
-const FLOAT_VEC2 = 0x8b50;
-const FLOAT_VEC3 = 0x8b51;
-const FLOAT_VEC4 = 0x8b52;
+export function getUniforms<U extends Uniforms>({
+  gl,
+  program,
+  uniforms,
+}: {
+  gl: WebGL2RenderingContext;
+  program: WebGLProgram;
+  uniforms: U;
+}): {
+  locations: Record<keyof U, WebGLUniformLocation>;
+  setters: Record<keyof U, (value: GetUniformType<U[keyof U]>) => void>;
+} {
+  const locations = {} as Record<keyof U, WebGLUniformLocation>;
+  const setters = {} as Record<keyof U, (value: GetUniformType<U[keyof U]>) => void>;
 
-const INT = 0x1404;
-const INT_VEC2 = 0x8b53;
-const INT_VEC3 = 0x8b54;
-const INT_VEC4 = 0x8b55;
+  const numberOfUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+  const uniformNames = new Set(Object.keys(uniforms));
 
-const UNSIGNED_INT = 0x1405;
-const UNSIGNED_INT_VEC2 = 0x8dc6;
-const UNSIGNED_INT_VEC3 = 0x8dc7;
-const UNSIGNED_INT_VEC4 = 0x8dc8;
+  for (let i = 0; i < numberOfUniforms; i++) {
+    const uniform = gl.getActiveUniform(program, i);
 
-const BOOL = 0x8b56;
-const BOOL_VEC2 = 0x8b57;
-const BOOL_VEC3 = 0x8b58;
-const BOOL_VEC4 = 0x8b59;
+    if (!uniform) {
+      throw new Error(`Failed to get uniform at index: ${i}`);
+    }
 
-const FLOAT_MAT2 = 0x8b5a;
-const FLOAT_MAT3 = 0x8b5b;
-const FLOAT_MAT4 = 0x8b5c;
+    // Check that the uniform found was declared by the user
+    if (!uniformNames.has(uniform.name)) {
+      console.warn(`Unused uniform: ${uniform.name}`);
+      continue;
+    } else {
+      uniformNames.delete(uniform.name);
+    }
 
+    // After the previous check, we can safely assume that uniform.name is a keyof U
+    const uniformName = uniform.name as keyof U;
+
+    const location = gl.getUniformLocation(program, uniform.name);
+
+    if (!location) {
+      throw new Error(`Failed to get uniform location: ${uniform.name}`);
+    }
+
+    locations[uniformName] = location;
+
+    // Validate that the uniform type matches the expected type
+    const typeLabel = getUniformTypeLabel(uniform.type);
+    const type = uniforms[uniformName];
+
+    if (typeLabel !== type) {
+      throw new Error(`Uniform type mismatch: ${typeLabel} !== ${type}. For uniform: ${uniform.name}`);
+    }
+
+    // Create a setter for the uniform
+    // We can safely assume that setterCreator will return a setter for the correct type
+    // because we have already validated that the uniform type matches the expected type
+    const setterCreator = getUniformSetter(uniform.type);
+    const setter = setterCreator(gl, location) as (value: GetUniformType<typeof typeLabel>) => void;
+    setters[uniformName] = setter;
+  }
+
+  // Check for any missing uniforms
+  if (uniformNames.size > 0) {
+    throw new Error(`Missing uniforms: ${Array.from(uniformNames).join(", ")}`);
+  }
+
+  return {
+    locations,
+    setters,
+  };
+}
+
+export type Uniforms = Record<string, UniformTypeLabel>;
+
+type UniformTypeLabel = keyof UniformTypeMap;
 export type GetUniformType<T extends UniformTypeLabel> = UniformTypeMap[T];
-export type UniformTypeLabel = keyof UniformTypeMap;
 
-export type UniformTypeMap = {
+type UniformTypeMap = {
   float: number;
   vec2: [number, number];
   vec3: [number, number, number];
@@ -68,7 +117,31 @@ export type UniformTypeMap = {
   ];
 };
 
-export const UNIFORM_SETTERS = {
+const FLOAT = 0x1406;
+const FLOAT_VEC2 = 0x8b50;
+const FLOAT_VEC3 = 0x8b51;
+const FLOAT_VEC4 = 0x8b52;
+
+const INT = 0x1404;
+const INT_VEC2 = 0x8b53;
+const INT_VEC3 = 0x8b54;
+const INT_VEC4 = 0x8b55;
+
+const UNSIGNED_INT = 0x1405;
+const UNSIGNED_INT_VEC2 = 0x8dc6;
+const UNSIGNED_INT_VEC3 = 0x8dc7;
+const UNSIGNED_INT_VEC4 = 0x8dc8;
+
+const BOOL = 0x8b56;
+const BOOL_VEC2 = 0x8b57;
+const BOOL_VEC3 = 0x8b58;
+const BOOL_VEC4 = 0x8b59;
+
+const FLOAT_MAT2 = 0x8b5a;
+const FLOAT_MAT3 = 0x8b5b;
+const FLOAT_MAT4 = 0x8b5c;
+
+const UNIFORM_SETTERS = {
   [FLOAT]: floatSetter,
   [FLOAT_VEC2]: floatVec2Setter,
   [FLOAT_VEC3]: floatVec3Setter,
@@ -94,7 +167,7 @@ export const UNIFORM_SETTERS = {
   [FLOAT_MAT4]: floatMat4Setter,
 } as const;
 
-export const WEBGL_TO_UNIFORM_TYPE = {
+const WEBGL_TO_UNIFORM_TYPE = {
   [FLOAT]: "float",
   [FLOAT_VEC2]: "vec2",
   [FLOAT_VEC3]: "vec3",
@@ -116,7 +189,7 @@ export const WEBGL_TO_UNIFORM_TYPE = {
   [FLOAT_MAT4]: "mat4",
 } as const;
 
-export function getUniformTypeLabel(type: number) {
+function getUniformTypeLabel(type: number) {
   const webglType = WEBGL_TO_UNIFORM_TYPE[type as keyof typeof WEBGL_TO_UNIFORM_TYPE];
 
   if (!webglType) {
@@ -126,7 +199,7 @@ export function getUniformTypeLabel(type: number) {
   return webglType;
 }
 
-export function getUniformSetter(type: number) {
+function getUniformSetter(type: number) {
   const setter = UNIFORM_SETTERS[type as keyof typeof UNIFORM_SETTERS];
 
   if (!setter) {

@@ -1,10 +1,7 @@
-import { GetUniformType, UniformTypeLabel, getUniformSetter, getUniformTypeLabel } from "./uniforms";
-import { AttributeTypeLabel, GetAttributeType, getAttributeSetter, getAttributeTypeLabel } from "./attributes";
+import { Uniforms, GetUniformType, getUniforms } from "./uniforms";
+import { Attributes, GetAttributeType, getAttributes } from "./attributes";
 
-export type Uniforms = Record<string, UniformTypeLabel>;
-export type Attributes = Record<string, AttributeTypeLabel>;
-
-type MaterialData<A extends Attributes = Attributes, U extends Uniforms = Uniforms> = {
+type MaterialData<A extends Attributes, U extends Uniforms> = {
   gl: WebGL2RenderingContext;
   shader: {
     vertex: string;
@@ -14,7 +11,7 @@ type MaterialData<A extends Attributes = Attributes, U extends Uniforms = Unifor
   uniforms: U;
 };
 
-export class Material<A extends Attributes = Attributes, U extends Uniforms = Uniforms> {
+export class Material<A extends Attributes, U extends Uniforms> {
   public readonly program: WebGLProgram;
 
   public readonly uniforms: {
@@ -46,8 +43,17 @@ export class Material<A extends Attributes = Attributes, U extends Uniforms = Un
       fragmentSource: data.shader.fragment,
     });
 
-    const uniforms = getUniforms(gl, program, data.uniforms);
-    const attributes = getAttributes(gl, program, data.attributes);
+    const uniforms = getUniforms({
+      gl,
+      program,
+      uniforms: data.uniforms,
+    });
+
+    const attributes = getAttributes({
+      gl,
+      program,
+      attributes: data.attributes,
+    });
 
     this.gl = gl;
     this.program = program;
@@ -120,134 +126,4 @@ function createShader(gl: WebGL2RenderingContext, type: number, source: string):
   }
 
   return shader;
-}
-
-function getAttributes<A extends Attributes>(
-  gl: WebGL2RenderingContext,
-  program: WebGLProgram,
-  attributes: A
-): {
-  locations: Record<keyof A, number>;
-  setters: Record<keyof A, (value: GetAttributeType<A[keyof A]>) => void>;
-  buffers: Record<keyof A, WebGLBuffer>;
-} {
-  const locations = {} as Record<keyof A, number>;
-  const setters = {} as Record<keyof A, (value: GetAttributeType<A[keyof A]>) => void>;
-  const buffers = {} as Record<keyof A, WebGLBuffer>;
-
-  for (const attributeName in attributes) {
-    // Get the location of the attribute
-    const location = gl.getAttribLocation(program, attributeName);
-
-    if (location === -1) {
-      throw new Error(`Failed to get attribute location: ${attributeName}`);
-    }
-
-    locations[attributeName] = location;
-
-    // Validate that the attribute type matches the expected type
-    const attribute = gl.getActiveAttrib(program, location);
-
-    if (!attribute) {
-      throw new Error(`Failed to get attribute data: ${attributeName}`);
-    }
-
-    const typeLabel = getAttributeTypeLabel(attribute.type);
-    const type = attributes[attributeName];
-
-    if (typeLabel !== type) {
-      throw new Error(`Attribute type mismatch: ${typeLabel} !== ${type}. For attribute: ${attributeName}`);
-    }
-
-    // Create a buffer for the attribute
-    const buffer = gl.createBuffer();
-
-    if (!buffer) {
-      throw new Error(`Failed to create buffer for attribute: ${attributeName}`);
-    }
-
-    buffers[attributeName] = buffer;
-
-    // Create a setter for the attribute
-    const bufferSetter = getAttributeSetter(attribute.type)(gl, location);
-
-    setters[attributeName] = (value: GetAttributeType<A[keyof A]>) => {
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, value, gl.STATIC_DRAW);
-      bufferSetter({ buffer });
-    };
-  }
-
-  return {
-    locations,
-    setters,
-    buffers,
-  };
-}
-
-function getUniforms<U extends Uniforms>(
-  gl: WebGL2RenderingContext,
-  program: WebGLProgram,
-  uniforms: U
-): {
-  locations: Record<keyof U, WebGLUniformLocation>;
-  setters: Record<keyof U, (value: GetUniformType<U[keyof U]>) => void>;
-} {
-  const locations = {} as Record<keyof U, WebGLUniformLocation>;
-  const setters = {} as Record<keyof U, (value: GetUniformType<U[keyof U]>) => void>;
-
-  const numberOfUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-  const uniformNames = new Set(Object.keys(uniforms));
-
-  for (let i = 0; i < numberOfUniforms; i++) {
-    const uniform = gl.getActiveUniform(program, i);
-
-    if (!uniform) {
-      throw new Error(`Failed to get uniform at index: ${i}`);
-    }
-
-    // Check that the uniform found was declared by the user
-    if (!uniformNames.has(uniform.name)) {
-      console.warn(`Unused uniform: ${uniform.name}`);
-      continue;
-    } else {
-      uniformNames.delete(uniform.name);
-    }
-
-    // After the previous check, we can safely assume that uniform.name is a keyof U
-    const uniformName = uniform.name as keyof U;
-
-    const location = gl.getUniformLocation(program, uniform.name);
-
-    if (!location) {
-      throw new Error(`Failed to get uniform location: ${uniform.name}`);
-    }
-
-    locations[uniformName] = location;
-
-    // Validate that the uniform type matches the expected type
-    const typeLabel = getUniformTypeLabel(uniform.type);
-    const type = uniforms[uniformName];
-
-    if (typeLabel !== type) {
-      throw new Error(`Uniform type mismatch: ${typeLabel} !== ${type}. For uniform: ${uniform.name}`);
-    }
-
-    // Create a setter for the uniform
-    // We can safely assume that setterCreator will return a setter for the correct type
-    // because we have already validated that the uniform type matches the expected type
-    const setterCreator = getUniformSetter(uniform.type);
-    const setter = setterCreator(gl, location) as (value: GetUniformType<typeof typeLabel>) => void;
-    setters[uniformName] = setter;
-  }
-
-  // Check for any missing uniforms
-  if (uniformNames.size > 0) {
-    throw new Error(`Missing uniforms: ${Array.from(uniformNames).join(", ")}`);
-  }
-
-  return {
-    locations,
-    setters,
-  };
 }

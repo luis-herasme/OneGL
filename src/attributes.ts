@@ -1,3 +1,72 @@
+export type Attributes = Record<string, AttributeTypeLabel>;
+
+export function getAttributes<A extends Attributes>({
+  gl,
+  program,
+  attributes,
+}: {
+  gl: WebGL2RenderingContext;
+  program: WebGLProgram;
+  attributes: A;
+}): {
+  locations: Record<keyof A, number>;
+  setters: Record<keyof A, (value: GetAttributeType<A[keyof A]>) => void>;
+  buffers: Record<keyof A, WebGLBuffer>;
+} {
+  const locations = {} as Record<keyof A, number>;
+  const setters = {} as Record<keyof A, (value: GetAttributeType<A[keyof A]>) => void>;
+  const buffers = {} as Record<keyof A, WebGLBuffer>;
+
+  for (const attributeName in attributes) {
+    // Get the location of the attribute
+    const location = gl.getAttribLocation(program, attributeName);
+
+    if (location === -1) {
+      throw new Error(`Failed to get attribute location: ${attributeName}`);
+    }
+
+    locations[attributeName] = location;
+
+    // Validate that the attribute type matches the expected type
+    const attribute = gl.getActiveAttrib(program, location);
+
+    if (!attribute) {
+      throw new Error(`Failed to get attribute data: ${attributeName}`);
+    }
+
+    const typeLabel = getAttributeTypeLabel(attribute.type);
+    const type = attributes[attributeName];
+
+    if (typeLabel !== type) {
+      throw new Error(`Attribute type mismatch: ${typeLabel} !== ${type}. For attribute: ${attributeName}`);
+    }
+
+    // Create a buffer for the attribute
+    const buffer = gl.createBuffer();
+
+    if (!buffer) {
+      throw new Error(`Failed to create buffer for attribute: ${attributeName}`);
+    }
+
+    buffers[attributeName] = buffer;
+
+    // Create a setter for the attribute
+    const bufferSetter = getAttributeSetter(attribute.type)(gl, location);
+
+    setters[attributeName] = (value: GetAttributeType<A[keyof A]>) => {
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, value, gl.STATIC_DRAW);
+      bufferSetter({ buffer });
+    };
+  }
+
+  return {
+    locations,
+    setters,
+    buffers,
+  };
+}
+
 const FLOAT = 0x1406;
 const FLOAT_VEC2 = 0x8b50;
 const FLOAT_VEC3 = 0x8b51;
@@ -22,7 +91,7 @@ const FLOAT_MAT2 = 0x8b5a;
 const FLOAT_MAT3 = 0x8b5b;
 const FLOAT_MAT4 = 0x8b5c;
 
-export const WEBGL_TO_ATTRIBUTE_TYPE = {
+const WEBGL_TO_ATTRIBUTE_TYPE = {
   [FLOAT]: "float",
   [FLOAT_VEC2]: "vec2",
   [FLOAT_VEC3]: "vec3",
@@ -44,7 +113,7 @@ export const WEBGL_TO_ATTRIBUTE_TYPE = {
   [FLOAT_MAT4]: "mat4",
 } as const;
 
-export function getAttributeTypeLabel(type: number) {
+function getAttributeTypeLabel(type: number) {
   const webglType = WEBGL_TO_ATTRIBUTE_TYPE[type as keyof typeof WEBGL_TO_ATTRIBUTE_TYPE];
 
   if (!webglType) {
@@ -54,7 +123,7 @@ export function getAttributeTypeLabel(type: number) {
   return webglType;
 }
 
-export type AttributeTypeMap = {
+type AttributeTypeMap = {
   float: Float32Array;
   vec2: Float32Array;
   vec3: Float32Array;
@@ -80,10 +149,10 @@ export type AttributeTypeMap = {
   mat4: Float32Array;
 };
 
-export type AttributeTypeLabel = keyof AttributeTypeMap;
+type AttributeTypeLabel = keyof AttributeTypeMap;
 export type GetAttributeType<T extends AttributeTypeLabel> = AttributeTypeMap[T];
 
-export const ATTRIBUTE_SETTERS = {
+const ATTRIBUTE_SETTERS = {
   [FLOAT]: floatAttribSetterGenerator(1),
   [FLOAT_VEC2]: floatAttribSetterGenerator(2),
   [FLOAT_VEC3]: floatAttribSetterGenerator(3),
@@ -95,7 +164,7 @@ export const ATTRIBUTE_SETTERS = {
   [INT_VEC4]: intAttribSetterGenerator(4),
 } as const;
 
-export function getAttributeSetter(type: number) {
+function getAttributeSetter(type: number) {
   const setter = ATTRIBUTE_SETTERS[type as keyof typeof ATTRIBUTE_SETTERS];
 
   if (!setter) {
@@ -105,7 +174,7 @@ export function getAttributeSetter(type: number) {
   return setter;
 }
 
-export type BufferOptions = {
+type BufferOptions = {
   buffer: WebGLBuffer;
   normalize?: boolean;
   stride?: number;
