@@ -17,7 +17,10 @@ type MaterialData<
   uniforms: U;
 };
 
-export class Material<A extends AttributesDeclaration, U extends UniformsDeclaration> {
+export class Material<
+  A extends AttributesDeclaration = AttributesDeclaration,
+  U extends UniformsDeclaration = UniformsDeclaration
+> {
   public readonly program: WebGLProgram;
 
   public readonly uniforms: {
@@ -38,6 +41,8 @@ export class Material<A extends AttributesDeclaration, U extends UniformsDeclara
   public readonly setUniform: <K extends keyof U>(name: K, value: GetUniformType<U[K]>) => void;
   public readonly setAttribute: <K extends keyof A>(name: K, value: GetAttributeType<A[K]>) => void;
 
+  public readonly gl: WebGL2RenderingContext;
+
   constructor(data: MaterialData<A, U>) {
     const { gl } = data;
 
@@ -45,6 +50,7 @@ export class Material<A extends AttributesDeclaration, U extends UniformsDeclara
     const uniforms = getUniforms(gl, program, data.uniforms);
     const attributes = getAttributes(gl, program, data.attributes);
 
+    this.gl = gl;
     this.program = program;
     this.uniforms = uniforms;
     this.attributes = attributes;
