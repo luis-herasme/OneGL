@@ -1,7 +1,24 @@
-export class QuadGeometry {
-  public readonly vertices: Float32Array;
+export interface Geometry {
+  positions: Float32Array;
+}
+
+export class QuadGeometry implements Geometry {
+  public readonly positions: Float32Array;
 
   constructor({ width, height }: { width: number; height: number }) {
-    this.vertices = new Float32Array([0, 0, 0, height, width, 0, 0, height, width, 0, width, height]);
+    this.positions = new Float32Array([
+      -width / 2,
+      -height / 2,
+      -width / 2,
+      height / 2,
+      width / 2,
+      -height / 2,
+      -width / 2,
+      height / 2,
+      width / 2,
+      -height / 2,
+      width / 2,
+      height / 2,
+    ]);
   }
 }
