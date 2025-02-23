@@ -4,10 +4,10 @@ import { AttributeTypeLabel, GetAttributeType, getAttributeSetter, getAttributeT
 export type UniformsDeclaration = Record<string, UniformTypeLabel>;
 export type AttributesDeclaration = Record<string, AttributeTypeLabel>;
 
-interface MaterialData<
+type MaterialData<
   A extends AttributesDeclaration = AttributesDeclaration,
   U extends UniformsDeclaration = UniformsDeclaration
-> {
+> = {
   gl: WebGL2RenderingContext;
   shader: {
     vertex: string;
@@ -15,43 +15,42 @@ interface MaterialData<
   };
   attributes: A;
   uniforms: U;
-}
+};
 
-export interface Material<A extends AttributesDeclaration, U extends UniformsDeclaration> {
-  program: WebGLProgram;
-  uniforms: {
+export class Material<A extends AttributesDeclaration, U extends UniformsDeclaration> {
+  public readonly program: WebGLProgram;
+
+  public readonly uniforms: {
     locations: Record<keyof U, WebGLUniformLocation>;
     setters: {
       [K in keyof U]: (value: GetUniformType<U[K]>) => void;
     };
   };
-  attributes: {
+
+  public readonly attributes: {
     locations: Record<keyof A, number>;
     buffers: Record<keyof A, WebGLBuffer>;
     setters: {
       [K in keyof A]: (value: GetAttributeType<A[K]>) => void;
     };
   };
-  setUniform: <K extends keyof U>(name: K, value: GetUniformType<U[K]>) => void;
-  setAttribute: <K extends keyof A>(name: K, value: GetAttributeType<A[K]>) => void;
-}
 
-export function Material<A extends AttributesDeclaration, U extends UniformsDeclaration>(
-  data: MaterialData<A, U>
-): Material<A, U> {
-  const { gl } = data;
+  public readonly setUniform: <K extends keyof U>(name: K, value: GetUniformType<U[K]>) => void;
+  public readonly setAttribute: <K extends keyof A>(name: K, value: GetAttributeType<A[K]>) => void;
 
-  const program = createWebGLProgram(gl, data);
-  const uniforms = getUniforms(gl, program, data.uniforms);
-  const attributes = getAttributes(gl, program, data.attributes);
+  constructor(data: MaterialData<A, U>) {
+    const { gl } = data;
 
-  return {
-    program,
-    uniforms,
-    attributes,
-    setUniform: (name, value) => uniforms.setters[name](value),
-    setAttribute: (name, value) => attributes.setters[name](value),
-  };
+    const program = createWebGLProgram(gl, data);
+    const uniforms = getUniforms(gl, program, data.uniforms);
+    const attributes = getAttributes(gl, program, data.attributes);
+
+    this.program = program;
+    this.uniforms = uniforms;
+    this.attributes = attributes;
+    this.setUniform = (name, value) => uniforms.setters[name](value);
+    this.setAttribute = (name, value) => attributes.setters[name](value);
+  }
 }
 
 function createWebGLProgram(gl: WebGL2RenderingContext, data: MaterialData): WebGLProgram {

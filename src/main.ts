@@ -1,12 +1,12 @@
 import { Matrix } from "./matrix";
 import Renderer from "./renderer";
-import { createQuad } from "./primitives";
+import { QuadGeometry } from "./primitives";
 import { vertexShader, fragmentShader } from "./shaders";
 import { Material } from "./program";
 
 const renderer = new Renderer();
 
-const material = Material({
+const material = new Material({
   gl: renderer.gl,
   shader: {
     vertex: vertexShader,
@@ -22,7 +22,7 @@ const material = Material({
   },
 });
 
-const quad = createQuad({
+const quad = new QuadGeometry({
   width: 100,
   height: 50,
 });
@@ -46,7 +46,7 @@ function render() {
   material.setUniform("uProjection", Matrix.projection(renderer.canvas.width, renderer.canvas.height));
   material.setUniform("uColor", [1, 0, 0, 1]);
 
-  material.setAttribute("aPosition", quad);
+  material.setAttribute("aPosition", quad.vertices);
 
   renderer.gl.drawArrays(renderer.gl.TRIANGLES, 0, 6);
 

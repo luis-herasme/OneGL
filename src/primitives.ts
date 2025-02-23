@@ -1,3 +1,7 @@
-export function createQuad({ width, height }: { width: number; height: number }): Float32Array {
-  return new Float32Array([0, 0, 0, height, width, 0, 0, height, width, 0, width, height]);
+export class QuadGeometry {
+  public readonly vertices: Float32Array;
+
+  constructor({ width, height }: { width: number; height: number }) {
+    this.vertices = new Float32Array([0, 0, 0, height, width, 0, 0, height, width, 0, width, height]);
+  }
 }
