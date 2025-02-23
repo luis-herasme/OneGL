@@ -1,5 +1,5 @@
 import { Matrix } from "./matrix";
-import { Material } from "./program";
+import { Material } from "./material";
 import { Geometry } from "./primitives";
 
 type MeshMaterial = Material<{ aPosition: "vec2" }, { uProjection: "mat3"; uTransform: "mat3" }>;

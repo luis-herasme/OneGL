@@ -1,13 +1,13 @@
-import { Matrix } from "./matrix";
-import Renderer from "./renderer";
+import Canvas from "./renderer";
 import { QuadGeometry } from "./primitives";
 import { vertexShader, fragmentShader } from "./shaders";
-import { Material } from "./program";
+import { Material } from "./material";
+import { Mesh } from "./mesh";
 
-const renderer = new Renderer();
+const canvas = new Canvas();
 
 const material = new Material({
-  gl: renderer.gl,
+  gl: canvas.gl,
   shader: {
     vertex: vertexShader,
     fragment: fragmentShader,
@@ -27,28 +27,16 @@ const quad = new QuadGeometry({
   height: 50,
 });
 
-let angle = 0;
+const mesh = new Mesh({ material, geometry: quad });
 
-renderer.gl.useProgram(material.program);
+material.setUniform("uColor", [1, 0, 0, 1]);
+mesh.transform.translate(window.innerWidth / 2, window.innerHeight / 2);
 
 function render() {
-  renderer.resizeCanvasToDisplaySize();
-  renderer.clearScreen();
+  canvas.clearScreen();
 
-  angle += 0.1;
-
-  const transform = new Matrix();
-  transform.translate(renderer.canvas.width / 2, renderer.canvas.height / 2);
-  transform.rotate(angle);
-  transform.translate(-50, -25);
-
-  material.setUniform("uTransform", transform.data);
-  material.setUniform("uProjection", Matrix.projection(renderer.canvas.width, renderer.canvas.height));
-  material.setUniform("uColor", [1, 0, 0, 1]);
-
-  material.setAttribute("aPosition", quad.vertices);
-
-  renderer.gl.drawArrays(renderer.gl.TRIANGLES, 0, 6);
+  mesh.transform.rotate(0.1);
+  mesh.render();
 
   requestAnimationFrame(render);
 }
