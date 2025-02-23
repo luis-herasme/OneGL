@@ -15,7 +15,7 @@ const DEFAULT_RENDERER_CONFIG: RendererConfig = {
   },
 };
 
-class Renderer {
+class Canvas {
   readonly canvas: HTMLCanvasElement;
   readonly gl: WebGL2RenderingContext;
 
@@ -31,6 +31,7 @@ class Renderer {
 
     gl.clearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a ?? 1.0);
     document.body.appendChild(this.canvas);
+    this.resizeCanvasToDisplaySize();
   }
 
   clearScreen() {
@@ -51,4 +52,4 @@ class Renderer {
   }
 }
 
-export default Renderer;
+export default Canvas;
