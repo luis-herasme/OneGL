@@ -1,27 +1,31 @@
-import { Matrix } from "./matrix";
+import { TransformMatrix } from "./matrix";
 import { Material } from "./material";
 import { Geometry } from "./primitives";
+import { Camera } from "./perspective-camera";
 
-type MeshMaterial = Material<{ aPosition: "vec2" }, { uProjection: "mat3"; uTransform: "mat3" }>;
+type MeshMaterial = Material<
+  { modelPosition: "vec3" },
+  { cameraInverseTransform: "mat4"; cameraProjection: "mat4"; modelTransform: "mat4" }
+>;
 
 export class Mesh {
+  public transform: TransformMatrix = TransformMatrix.identity();
   public material: MeshMaterial;
   public geometry: Geometry;
-  public transform: Matrix;
 
   constructor({ material, geometry }: { material: MeshMaterial; geometry: Geometry }) {
     this.material = material;
     this.geometry = geometry;
-    this.transform = Matrix.identity();
   }
 
-  public render() {
+  public render(camera: Camera) {
+    this.material.gl.viewport(0, 0, window.innerWidth, window.innerHeight);
     this.material.gl.useProgram(this.material.program);
 
-    this.material.setAttribute("aPosition", this.geometry.positions);
-    this.material.setUniform("uProjection", Matrix.projection(window.innerWidth, window.innerHeight));
-    this.material.setUniform("uTransform", this.transform.data);
+    this.material.setAttribute("modelPosition", this.geometry.positions);
+    this.material.setUniform("cameraProjection", camera.projection.data);
+    this.material.setUniform("cameraInverseTransform", TransformMatrix.inverse(camera.transform.data));
 
-    this.material.gl.drawArrays(this.material.gl.TRIANGLES, 0, 6);
+    this.material.gl.drawArrays(this.material.gl.TRIANGLES, 0, this.geometry.positions.length / 3);
   }
 }

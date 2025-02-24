@@ -3,6 +3,7 @@ import { QuadGeometry } from "./primitives";
 import { vertexShader, fragmentShader } from "./shaders";
 import { Material } from "./material";
 import { Mesh } from "./mesh";
+import { PerspectiveCamera } from "./perspective-camera";
 
 const canvas = new Canvas();
 
@@ -13,30 +14,37 @@ const material = new Material({
     fragment: fragmentShader,
   },
   attributes: {
-    aPosition: "vec2",
+    modelPosition: "vec3",
   },
   uniforms: {
-    uProjection: "mat3",
-    uTransform: "mat3",
-    uColor: "vec4",
+    cameraInverseTransform: "mat4",
+    cameraProjection: "mat4",
+    modelTransform: "mat4",
+    modelColor: "vec4",
   },
 });
 
 const quad = new QuadGeometry({
-  width: 100,
-  height: 50,
+  width: 1,
+  height: 1,
 });
 
 const mesh = new Mesh({ material, geometry: quad });
 
-material.setUniform("uColor", [1, 0, 0, 1]);
-mesh.transform.translate(window.innerWidth / 2, window.innerHeight / 2, 0);
+mesh.transform.translate(0, 0, 5);
+
+const camera = new PerspectiveCamera({
+  aspect: window.innerHeight / window.innerWidth,
+  fov: (45 * Math.PI) / 180,
+  near: 0.1,
+  far: 10,
+});
 
 function render() {
   canvas.clearScreen();
 
-  mesh.transform.rotate(0.1);
-  mesh.render();
+  mesh.render(camera);
+  material.setUniform("modelColor", [1, 0, 0, 1]);
 
   requestAnimationFrame(render);
 }
