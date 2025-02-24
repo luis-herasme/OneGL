@@ -1,14 +1,16 @@
 #version 300 es
 
-in vec2 aPosition;
-uniform mat3 uProjection;
-uniform mat3 uTransform;
-uniform vec4 uColor;
+in vec3 modelPosition;
+
+uniform mat4 cameraProjection;
+uniform mat4 cameraInverseTransform;
+uniform mat4 modelTransform;
+uniform vec4 modelColor;
 
 out vec4 vColor;
 
 void main() {
-    vec3 position = uProjection * uTransform * vec3(aPosition, 1.0);
-    gl_Position = vec4(position.xy, 0.0, 1.0);
-    vColor = uColor;
+    vec4 worldPosition = modelTransform*vec4(modelPosition, 1.0f);
+    gl_Position = cameraProjection*cameraInverseTransform*worldPosition;
+    vColor = modelColor;
 }
