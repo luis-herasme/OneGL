@@ -14,7 +14,7 @@ export function getUniforms<U extends Uniforms>({
   const setters = {} as Record<keyof U, (value: GetUniformType<U[keyof U]>) => void>;
 
   const numberOfUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-  const uniformNames = new Set(Object.keys(uniforms));
+  const uniformsNotFound = new Set(Object.keys(uniforms));
 
   for (let i = 0; i < numberOfUniforms; i++) {
     const uniform = gl.getActiveUniform(program, i);
@@ -24,11 +24,11 @@ export function getUniforms<U extends Uniforms>({
     }
 
     // Check that the uniform found was declared by the user
-    if (!uniformNames.has(uniform.name)) {
+    if (uniformsNotFound.has(uniform.name)) {
+      uniformsNotFound.delete(uniform.name);
+    } else {
       console.warn(`Unused uniform: ${uniform.name}`);
       continue;
-    } else {
-      uniformNames.delete(uniform.name);
     }
 
     // After the previous check, we can safely assume that uniform.name is a keyof U
@@ -59,8 +59,8 @@ export function getUniforms<U extends Uniforms>({
   }
 
   // Check for any missing uniforms
-  if (uniformNames.size > 0) {
-    throw new Error(`Missing uniforms: ${Array.from(uniformNames).join(", ")}`);
+  if (uniformsNotFound.size > 0) {
+    throw new Error(`Missing uniforms: ${Array.from(uniformsNotFound).join(", ")}`);
   }
 
   return {
