@@ -15,20 +15,30 @@ export class Matrix {
     this.data = Matrix.scale(this.data, sx, sy);
   }
 
-  translate(tx: number, ty: number): void {
-    this.data = Matrix.translate(this.data, tx, ty);
+  translate(x: number, y: number, z: number): void {
+    this.data = Matrix.multiply(this.data, Matrix.translation(x, y, z));
   }
 
   static identity(): MatrixData {
-    return [1, 0, 0, 0, 1, 0, 0, 0, 1];
+    // prettier-ignore
+    return [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1
+    ];
   }
 
   static projection(width: number, height: number): MatrixData {
     return [2 / width, 0, 0, 0, -2 / height, 0, -1, 1, 1];
   }
 
-  static translation(tx: number, ty: number): MatrixData {
-    return [1, 0, 0, 0, 1, 0, tx, ty, 1];
+  static translation(x: number, y: number, z: number): MatrixData {
+    // prettier-ignore
+    return [
+      1, 0, 0,
+      0, 1, 0,
+      x, y, z
+    ];
   }
 
   static rotation(angleInRadians: number): MatrixData {
@@ -77,10 +87,6 @@ export class Matrix {
       b20 * a01 + b21 * a11 + b22 * a21,
       b20 * a02 + b21 * a12 + b22 * a22,
     ];
-  }
-
-  static translate(m: MatrixData, tx: number, ty: number): MatrixData {
-    return Matrix.multiply(m, Matrix.translation(tx, ty));
   }
 
   static rotate(m: MatrixData, angleInRadians: number): MatrixData {

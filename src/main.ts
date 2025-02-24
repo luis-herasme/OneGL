@@ -30,7 +30,7 @@ const quad = new QuadGeometry({
 const mesh = new Mesh({ material, geometry: quad });
 
 material.setUniform("uColor", [1, 0, 0, 1]);
-mesh.transform.translate(window.innerWidth / 2, window.innerHeight / 2);
+mesh.transform.translate(window.innerWidth / 2, window.innerHeight / 2, 0);
 
 function render() {
   canvas.clearScreen();
