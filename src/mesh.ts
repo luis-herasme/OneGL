@@ -12,7 +12,7 @@ export class Mesh {
   constructor({ material, geometry }: { material: MeshMaterial; geometry: Geometry }) {
     this.material = material;
     this.geometry = geometry;
-    this.transform = new Matrix();
+    this.transform = Matrix.identity();
   }
 
   public render() {

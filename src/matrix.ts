@@ -3,7 +3,7 @@ type MatrixData = [number, number, number, number, number, number, number, numbe
 export class Matrix {
   data: MatrixData;
 
-  constructor(data: MatrixData = [1, 0, 0, 0, 1, 0, 0, 0, 1]) {
+  constructor(data: MatrixData) {
     this.data = data;
   }
 
@@ -19,13 +19,13 @@ export class Matrix {
     this.data = Matrix.multiply(this.data, Matrix.translation(x, y, z));
   }
 
-  static identity(): MatrixData {
+  static identity(): Matrix {
     // prettier-ignore
-    return [
+    return new Matrix([
       1, 0, 0,
       0, 1, 0,
       0, 0, 1
-    ];
+    ]);
   }
 
   static projection(width: number, height: number): MatrixData {
