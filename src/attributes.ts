@@ -10,12 +10,10 @@ export function getAttributes<A extends Attributes>({
   attributes: A;
 }): {
   locations: Record<keyof A, number>;
-  setters: Record<keyof A, (value: GetAttributeType<A[keyof A]>) => void>;
-  buffers: Record<keyof A, WebGLBuffer>;
+  setters: Record<keyof A, (value: GetAttributeType<A[keyof A]>, buffer: WebGLBuffer) => void>;
 } {
   const locations = {} as Record<keyof A, number>;
-  const setters = {} as Record<keyof A, (value: GetAttributeType<A[keyof A]>) => void>;
-  const buffers = {} as Record<keyof A, WebGLBuffer>;
+  const setters = {} as Record<keyof A, (value: GetAttributeType<A[keyof A]>, buffer: WebGLBuffer) => void>;
 
   for (const attributeName in attributes) {
     // Get the location of the attribute
@@ -41,19 +39,10 @@ export function getAttributes<A extends Attributes>({
       throw new Error(`Attribute type mismatch: ${typeLabel} !== ${type}. For attribute: ${attributeName}`);
     }
 
-    // Create a buffer for the attribute
-    const buffer = gl.createBuffer();
-
-    if (!buffer) {
-      throw new Error(`Failed to create buffer for attribute: ${attributeName}`);
-    }
-
-    buffers[attributeName] = buffer;
-
     // Create a setter for the attribute
     const bufferSetter = getAttributeSetter(attribute.type)(gl, location);
 
-    setters[attributeName] = (value: GetAttributeType<A[keyof A]>) => {
+    setters[attributeName] = (value: GetAttributeType<A[keyof A]>, buffer: WebGLBuffer) => {
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.bufferData(gl.ARRAY_BUFFER, value, gl.STATIC_DRAW);
       bufferSetter({ buffer });
@@ -63,7 +52,6 @@ export function getAttributes<A extends Attributes>({
   return {
     locations,
     setters,
-    buffers,
   };
 }
 
