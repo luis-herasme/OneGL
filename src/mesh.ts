@@ -30,9 +30,9 @@ export class Mesh {
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
     gl.useProgram(this.material.program);
 
-    this.material.setUniform("projectionMatrix", camera.projection.data);
-    this.material.setUniform("cameraInverseMatrix", TransformMatrix.inverse(camera.transform.data));
-    this.material.setUniform("modelMatrix", this.transform.data);
+    this.material.uniforms.projectionMatrix.set(camera.projection.data);
+    this.material.uniforms.cameraInverseMatrix.set(TransformMatrix.inverse(camera.transform.data));
+    this.material.uniforms.modelMatrix.set(this.transform.data);
 
     if (this.geometry.positionsBuffer == null) {
       this.geometry.positionsBuffer = gl.createBuffer();

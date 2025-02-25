@@ -48,7 +48,7 @@ function render() {
   mesh.transform.rotateZ(0.02);
   mesh.transform.rotateX(0.01);
   camera.updateProjectionMatrix();
-  material.setUniform("color", [1, 0, 0, 1]);
+  material.uniforms.color.set([1, 0, 0, 1]);
 
   requestAnimationFrame(render);
 }

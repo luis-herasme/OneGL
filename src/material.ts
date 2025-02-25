@@ -1,7 +1,7 @@
-import { Uniforms, GetUniformType, getUniforms } from "./uniforms";
+import { UniformsDefinitions, getUniforms, Uniforms } from "./uniforms";
 import { Attributes, GetAttributeType, getAttributes } from "./attributes";
 
-type MaterialData<A extends Attributes, U extends Uniforms> = {
+type MaterialData<A extends Attributes, U extends UniformsDefinitions> = {
   gl: WebGL2RenderingContext;
   shader: {
     vertex: string;
@@ -11,15 +11,9 @@ type MaterialData<A extends Attributes, U extends Uniforms> = {
   uniforms: U;
 };
 
-export class Material<A extends Attributes, U extends Uniforms> {
+export class Material<A extends Attributes, U extends UniformsDefinitions> {
   public readonly program: WebGLProgram;
-
-  public readonly uniforms: {
-    locations: Record<keyof U, WebGLUniformLocation>;
-    setters: {
-      [K in keyof U]: (value: GetUniformType<U[K]>) => void;
-    };
-  };
+  public readonly uniforms: Uniforms<U>;
 
   public readonly attributes: {
     locations: Record<keyof A, number>;
@@ -28,7 +22,6 @@ export class Material<A extends Attributes, U extends Uniforms> {
     };
   };
 
-  public readonly setUniform: <K extends keyof U>(name: K, value: GetUniformType<U[K]>) => void;
   public readonly setAttribute: <K extends keyof A>(
     name: K,
     value: GetAttributeType<A[K]>,
@@ -62,7 +55,6 @@ export class Material<A extends Attributes, U extends Uniforms> {
     this.program = program;
     this.uniforms = uniforms;
     this.attributes = attributes;
-    this.setUniform = (name, value) => uniforms.setters[name](value);
     this.setAttribute = (name, value, buffer) => attributes.setters[name](value, buffer);
   }
 }
