@@ -127,10 +127,10 @@ type AttributeTypeMap = {
   uvec3: Uint32Array;
   uvec4: Uint32Array;
 
-  bool: Uint32Array;
-  bvec2: Uint32Array;
-  bvec3: Uint32Array;
-  bvec4: Uint32Array;
+  bool: Uint8Array;
+  bvec2: Uint8Array;
+  bvec3: Uint8Array;
+  bvec4: Uint8Array;
 
   mat2: Float32Array;
   mat3: Float32Array;
