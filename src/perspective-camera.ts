@@ -1,9 +1,5 @@
 import { TransformMatrix } from "./matrix";
-
-export interface Camera {
-  transform: TransformMatrix;
-  projection: TransformMatrix;
-}
+import { Camera } from "./orthographic-camera";
 
 type PerspectiveProjection = {
   fov: number;

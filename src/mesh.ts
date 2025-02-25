@@ -1,11 +1,17 @@
 import { TransformMatrix } from "./matrix";
 import { Material } from "./material";
 import { Geometry } from "./primitives";
-import { Camera } from "./perspective-camera";
+import { Camera } from "./orthographic-camera";
 
 type MeshMaterial = Material<
-  { modelPosition: "vec3" },
-  { cameraInverseTransform: "mat4"; cameraProjection: "mat4"; modelTransform: "mat4" }
+  {
+    position: "vec3";
+  },
+  {
+    projectionMatrix: "mat4";
+    cameraInverseMatrix: "mat4";
+    modelMatrix: "mat4";
+  }
 >;
 
 export class Mesh {
@@ -22,9 +28,10 @@ export class Mesh {
     this.material.gl.viewport(0, 0, window.innerWidth, window.innerHeight);
     this.material.gl.useProgram(this.material.program);
 
-    this.material.setAttribute("modelPosition", this.geometry.positions);
-    this.material.setUniform("cameraProjection", camera.projection.data);
-    this.material.setUniform("cameraInverseTransform", TransformMatrix.inverse(camera.transform.data));
+    this.material.setAttribute("position", this.geometry.positions);
+    this.material.setUniform("projectionMatrix", camera.projection.data);
+    this.material.setUniform("cameraInverseMatrix", TransformMatrix.inverse(camera.transform.data));
+    this.material.setUniform("modelMatrix", this.transform.data);
 
     this.material.gl.drawArrays(this.material.gl.TRIANGLES, 0, this.geometry.positions.length / 3);
   }

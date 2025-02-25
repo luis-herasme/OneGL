@@ -1,5 +1,5 @@
 import Canvas from "./renderer";
-import { QuadGeometry } from "./primitives";
+import { BoxGeometry } from "./primitives";
 import { vertexShader, fragmentShader } from "./shaders";
 import { Material } from "./material";
 import { Mesh } from "./mesh";
@@ -14,24 +14,23 @@ const material = new Material({
     fragment: fragmentShader,
   },
   attributes: {
-    modelPosition: "vec3",
+    position: "vec3",
   },
   uniforms: {
-    cameraInverseTransform: "mat4",
-    cameraProjection: "mat4",
-    modelTransform: "mat4",
-    modelColor: "vec4",
+    color: "vec4",
+    modelMatrix: "mat4",
+    projectionMatrix: "mat4",
+    cameraInverseMatrix: "mat4",
   },
 });
 
-const quad = new QuadGeometry({
+const box = new BoxGeometry({
   width: 1,
   height: 1,
+  depth: 1,
 });
 
-const mesh = new Mesh({ material, geometry: quad });
-
-mesh.transform.translate(0, 0, 5);
+const mesh = new Mesh({ material, geometry: box });
 
 const camera = new PerspectiveCamera({
   aspect: window.innerHeight / window.innerWidth,
@@ -40,11 +39,16 @@ const camera = new PerspectiveCamera({
   far: 10,
 });
 
+camera.transform.translate(0, 0, -5);
+
 function render() {
   canvas.clearScreen();
-
   mesh.render(camera);
-  material.setUniform("modelColor", [1, 0, 0, 1]);
+
+  mesh.transform.rotateZ(0.02);
+  mesh.transform.rotateX(0.01);
+  camera.updateProjectionMatrix();
+  material.setUniform("color", [1, 0, 0, 1]);
 
   requestAnimationFrame(render);
 }
