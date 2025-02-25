@@ -1,16 +1,65 @@
+import { Texture } from "./texture";
 import { assertNever } from "./utils/assert-never";
+
+const textureUnits: WeakMap<WebGLProgram, number> = new WeakMap();
 
 class Uniform<T extends UniformTypeLabel> {
   readonly gl: WebGL2RenderingContext;
   readonly type: UniformTypeLabel;
   readonly location: WebGLUniformLocation;
+
+  readonly name: string;
+  readonly unit: number | undefined;
+  readonly program: WebGLProgram;
+
   readonly set: (value: UniformTypeMap[T]) => void;
 
-  constructor(gl: WebGL2RenderingContext, type: UniformTypeLabel, location: WebGLUniformLocation) {
+  constructor({
+    gl,
+    type,
+    name,
+    program,
+  }: {
+    gl: WebGL2RenderingContext;
+    type: UniformTypeLabel;
+    name: string;
+    program: WebGLProgram;
+  }) {
     this.gl = gl;
     this.type = type;
-    this.location = location;
+    this.name = name;
+    this.program = program;
+
+    this.unit = this.getUnit();
+    this.location = this.getLocation();
     this.set = this.createSetterFunction() as (value: UniformTypeMap[T]) => void;
+  }
+
+  private getLocation() {
+    const location = this.gl.getUniformLocation(this.program, this.name);
+
+    if (!location) {
+      throw new Error(`Failed to get uniform location: ${this.name}`);
+    }
+
+    return location;
+  }
+
+  private getUnit() {
+    if (this.type !== "sampler2D") {
+      return undefined;
+    }
+
+    let unit = textureUnits.get(this.program);
+
+    if (unit === undefined) {
+      unit = 0;
+    } else {
+      unit = unit + 1;
+    }
+
+    textureUnits.set(this.program, unit);
+    return unit;
   }
 
   private createSetterFunction() {
@@ -41,6 +90,12 @@ class Uniform<T extends UniformTypeLabel> {
       case "mat2":    return (value: UniformTypeMap["mat2"]) => gl.uniformMatrix2fv(location, false, value);
       case "mat3":    return (value: UniformTypeMap["mat3"]) => gl.uniformMatrix3fv(location, false, value);
       case "mat4":    return (value: UniformTypeMap["mat4"]) => gl.uniformMatrix4fv(location, false, value);
+
+      case "sampler2D": return (value: UniformTypeMap["sampler2D"]) => {
+        this.gl.activeTexture(this.gl.TEXTURE0 + this.unit!);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, value.texture);
+        gl.uniform1i(location, this.unit!);
+      };
 
       default:        return assertNever(type); // Ensures exhaustive handling
     }
@@ -81,12 +136,7 @@ export function getUniforms<U extends UniformsDefinitions>({
     }
 
     // After the previous check, we can safely assume that uniform.name is a keyof U
-    const uniformName = uniform.name as keyof U;
-    const location = gl.getUniformLocation(program, uniform.name);
-
-    if (!location) {
-      throw new Error(`Failed to get uniform location: ${uniform.name}`);
-    }
+    const name = uniform.name as keyof U;
 
     // Validate that the uniform type matches the expected type
     const type = WEBGL_TO_UNIFORM_TYPE[uniform.type];
@@ -95,15 +145,35 @@ export function getUniforms<U extends UniformsDefinitions>({
       throw new Error(`Unsupported uniform type: ${uniform.type}`);
     }
 
-    if (type !== uniforms[uniformName]) {
-      throw new Error(`Uniform type mismatch: ${type} !== ${uniforms[uniformName]}. For uniform: ${uniform.name}`);
+    if (type !== uniforms[name]) {
+      throw new Error(`Uniform type mismatch: ${type} !== ${uniforms[name]}. For uniform: ${uniform.name}`);
     }
 
-    uniformsMap[uniformName] = new Uniform(gl, type, location);
+    uniformsMap[name] = new Uniform({
+      gl,
+      type,
+      name: uniform.name,
+      program,
+    });
   }
 
   // Check for any missing uniforms
   if (uniformsNotFound.size > 0) {
+    // Ignore sampler2D uniforms
+    for (const name of uniformsNotFound) {
+      if (uniforms[name] === "sampler2D") {
+        uniformsNotFound.delete(name);
+
+        // @ts-ignore
+        uniformsMap[name] = new Uniform({
+          gl,
+          type: "sampler2D",
+          name,
+          program,
+        });
+      }
+    }
+
     throw new Error(`Missing uniforms: ${Array.from(uniformsNotFound).join(", ")}`);
   }
 
@@ -149,6 +219,7 @@ type UniformTypeMap = {
     number, number, number, number,
     number, number, number, number
   ];
+  sampler2D: Texture;
 };
 
 enum WebGLUniformType {
@@ -175,6 +246,8 @@ enum WebGLUniformType {
   FLOAT_MAT2 = 0x8b5a,
   FLOAT_MAT3 = 0x8b5b,
   FLOAT_MAT4 = 0x8b5c,
+
+  SAMPLER_2D = 0x8b5e,
 }
 
 const WEBGL_TO_UNIFORM_TYPE: Record<number, UniformTypeLabel | undefined> = {
@@ -201,4 +274,6 @@ const WEBGL_TO_UNIFORM_TYPE: Record<number, UniformTypeLabel | undefined> = {
   [WebGLUniformType.FLOAT_MAT2]: "mat2",
   [WebGLUniformType.FLOAT_MAT3]: "mat3",
   [WebGLUniformType.FLOAT_MAT4]: "mat4",
+
+  [WebGLUniformType.SAMPLER_2D]: "sampler2D",
 };

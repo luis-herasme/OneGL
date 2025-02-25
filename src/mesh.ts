@@ -6,6 +6,7 @@ import { Camera } from "./orthographic-camera";
 type MeshMaterial = Material<
   {
     position: "vec3";
+    texcoord: "vec2";
   },
   {
     projectionMatrix: "mat4";
@@ -33,6 +34,12 @@ export class Mesh {
     this.material.uniforms.projectionMatrix.set(camera.projection.data);
     this.material.uniforms.cameraInverseMatrix.set(TransformMatrix.inverse(camera.transform.data));
     this.material.uniforms.modelMatrix.set(this.transform.data);
+
+    if (this.geometry.uvsBuffer == null) {
+      this.geometry.uvsBuffer = gl.createBuffer();
+    }
+
+    this.material.setAttribute("texcoord", this.geometry.uvs, this.geometry.uvsBuffer);
 
     if (this.geometry.positionsBuffer == null) {
       this.geometry.positionsBuffer = gl.createBuffer();

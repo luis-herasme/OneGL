@@ -4,6 +4,7 @@ import { vertexShader, fragmentShader } from "./shaders";
 import { Material } from "./material";
 import { Mesh } from "./mesh";
 import { PerspectiveCamera } from "./perspective-camera";
+import { Texture } from "./texture";
 
 const canvas = new Canvas();
 
@@ -15,14 +16,17 @@ const material = new Material({
   },
   attributes: {
     position: "vec3",
+    texcoord: "vec2",
   },
   uniforms: {
-    color: "vec4",
     modelMatrix: "mat4",
     projectionMatrix: "mat4",
     cameraInverseMatrix: "mat4",
+    uSampler: "sampler2D",
   },
 });
+
+const texture = await Texture.load({ gl: canvas.gl, src: "/t1.jpeg" });
 
 const box = new BoxGeometry({
   width: 1,
@@ -40,15 +44,16 @@ const camera = new PerspectiveCamera({
 });
 
 camera.transform.translate(0, 0, -5);
+material.gl.useProgram(material.program);
+material.uniforms.uSampler.set(texture);
 
 function render() {
   canvas.clearScreen();
   mesh.render(camera);
 
-  mesh.transform.rotateZ(0.02);
-  mesh.transform.rotateX(0.01);
+  mesh.transform.rotateZ(0.002);
+  mesh.transform.rotateX(0.001);
   camera.updateProjectionMatrix();
-  material.uniforms.color.set([1, 0, 0, 1]);
 
   requestAnimationFrame(render);
 }
