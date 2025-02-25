@@ -25,14 +25,27 @@ export class Mesh {
   }
 
   public render(camera: Camera) {
-    this.material.gl.viewport(0, 0, window.innerWidth, window.innerHeight);
-    this.material.gl.useProgram(this.material.program);
+    const gl = this.material.gl;
 
-    this.material.setAttribute("position", this.geometry.positions);
+    gl.viewport(0, 0, window.innerWidth, window.innerHeight);
+    gl.useProgram(this.material.program);
+
     this.material.setUniform("projectionMatrix", camera.projection.data);
     this.material.setUniform("cameraInverseMatrix", TransformMatrix.inverse(camera.transform.data));
     this.material.setUniform("modelMatrix", this.transform.data);
 
-    this.material.gl.drawArrays(this.material.gl.TRIANGLES, 0, this.geometry.positions.length / 3);
+    if (this.geometry.positionsBuffer == null) {
+      this.geometry.positionsBuffer = gl.createBuffer();
+    }
+
+    this.material.setAttribute("position", this.geometry.positions, this.geometry.positionsBuffer);
+
+    if (this.geometry.indicesBuffer == null) {
+      this.geometry.indicesBuffer = gl.createBuffer();
+    }
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.geometry.indicesBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.geometry.indices), gl.STATIC_DRAW);
+    gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
   }
 }

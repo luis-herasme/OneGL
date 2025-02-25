@@ -23,14 +23,17 @@ export class Material<A extends Attributes, U extends Uniforms> {
 
   public readonly attributes: {
     locations: Record<keyof A, number>;
-    buffers: Record<keyof A, WebGLBuffer>;
     setters: {
-      [K in keyof A]: (value: GetAttributeType<A[K]>) => void;
+      [K in keyof A]: (value: GetAttributeType<A[K]>, buffer: WebGLBuffer) => void;
     };
   };
 
   public readonly setUniform: <K extends keyof U>(name: K, value: GetUniformType<U[K]>) => void;
-  public readonly setAttribute: <K extends keyof A>(name: K, value: GetAttributeType<A[K]>) => void;
+  public readonly setAttribute: <K extends keyof A>(
+    name: K,
+    value: GetAttributeType<A[K]>,
+    buffer: WebGLBuffer
+  ) => void;
 
   public readonly gl: WebGL2RenderingContext;
 
@@ -60,7 +63,7 @@ export class Material<A extends Attributes, U extends Uniforms> {
     this.uniforms = uniforms;
     this.attributes = attributes;
     this.setUniform = (name, value) => uniforms.setters[name](value);
-    this.setAttribute = (name, value) => attributes.setters[name](value);
+    this.setAttribute = (name, value, buffer) => attributes.setters[name](value, buffer);
   }
 }
 
