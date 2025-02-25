@@ -4,74 +4,45 @@ class Uniform<T extends UniformTypeLabel> {
   readonly gl: WebGL2RenderingContext;
   readonly type: UniformTypeLabel;
   readonly location: WebGLUniformLocation;
+  readonly set: (value: UniformTypeMap[T]) => void;
 
   constructor(gl: WebGL2RenderingContext, type: UniformTypeLabel, location: WebGLUniformLocation) {
     this.gl = gl;
     this.type = type;
     this.location = location;
+    this.set = this.createSetterFunction() as (value: UniformTypeMap[T]) => void;
   }
 
-  set(value: UniformTypeMap[T]): void {
-    switch (this.type) {
-      case "float":
-        this.gl.uniform1f(this.location, value as UniformTypeMap["float"]);
-        break;
-      case "vec2":
-        this.gl.uniform2fv(this.location, value as UniformTypeMap["vec2"]);
-        break;
-      case "vec3":
-        this.gl.uniform3fv(this.location, value as UniformTypeMap["vec3"]);
-        break;
-      case "vec4":
-        this.gl.uniform4fv(this.location, value as UniformTypeMap["vec4"]);
-        break;
-      case "int":
-        this.gl.uniform1i(this.location, value as UniformTypeMap["int"]);
-        break;
-      case "ivec2":
-        this.gl.uniform2iv(this.location, value as UniformTypeMap["ivec2"]);
-        break;
-      case "ivec3":
-        this.gl.uniform3iv(this.location, value as UniformTypeMap["ivec3"]);
-        break;
-      case "ivec4":
-        this.gl.uniform4iv(this.location, value as UniformTypeMap["ivec4"]);
-        break;
-      case "uint":
-        this.gl.uniform1ui(this.location, value as UniformTypeMap["uint"]);
-        break;
-      case "uvec2":
-        this.gl.uniform2uiv(this.location, value as UniformTypeMap["uvec2"]);
-        break;
-      case "uvec3":
-        this.gl.uniform3uiv(this.location, value as UniformTypeMap["uvec3"]);
-        break;
-      case "uvec4":
-        this.gl.uniform4uiv(this.location, value as UniformTypeMap["uvec4"]);
-        break;
-      case "bool":
-        this.gl.uniform1i(this.location, value as UniformTypeMap["bool"]);
-        break;
-      case "bvec2":
-        this.gl.uniform2iv(this.location, value as UniformTypeMap["bvec2"]);
-        break;
-      case "bvec3":
-        this.gl.uniform3iv(this.location, value as UniformTypeMap["bvec3"]);
-        break;
-      case "bvec4":
-        this.gl.uniform4iv(this.location, value as UniformTypeMap["bvec4"]);
-        break;
-      case "mat2":
-        this.gl.uniformMatrix2fv(this.location, false, value as UniformTypeMap["mat2"]);
-        break;
-      case "mat3":
-        this.gl.uniformMatrix3fv(this.location, false, value as UniformTypeMap["mat3"]);
-        break;
-      case "mat4":
-        this.gl.uniformMatrix4fv(this.location, false, value as UniformTypeMap["mat4"]);
-        break;
-      default:
-        assertNever(this.type);
+  private createSetterFunction() {
+    const { gl, location, type } = this;
+
+    // prettier-ignore
+    switch (type) {
+      case "float":   return (value: UniformTypeMap["float"]) => gl.uniform1f(location, value);
+      case "vec2":    return (value: UniformTypeMap["vec2"]) => gl.uniform2fv(location, value);
+      case "vec3":    return (value: UniformTypeMap["vec3"]) => gl.uniform3fv(location, value);
+      case "vec4":    return (value: UniformTypeMap["vec4"]) => gl.uniform4fv(location, value);
+
+      case "int":     return (value: UniformTypeMap["int"]) => gl.uniform1i(location, value);
+      case "ivec2":   return (value: UniformTypeMap["ivec2"]) => gl.uniform2iv(location, value);
+      case "ivec3":   return (value: UniformTypeMap["ivec3"]) => gl.uniform3iv(location, value);
+      case "ivec4":   return (value: UniformTypeMap["ivec4"]) => gl.uniform4iv(location, value);
+
+      case "uint":    return (value: UniformTypeMap["uint"]) => gl.uniform1ui(location, value);
+      case "uvec2":   return (value: UniformTypeMap["uvec2"]) => gl.uniform2uiv(location, value);
+      case "uvec3":   return (value: UniformTypeMap["uvec3"]) => gl.uniform3uiv(location, value);
+      case "uvec4":   return (value: UniformTypeMap["uvec4"]) => gl.uniform4uiv(location, value);
+
+      case "bool":    return (value: UniformTypeMap["bool"]) => gl.uniform1i(location, value);
+      case "bvec2":   return (value: UniformTypeMap["bvec2"]) => gl.uniform2iv(location, value);
+      case "bvec3":   return (value: UniformTypeMap["bvec3"]) => gl.uniform3iv(location, value);
+      case "bvec4":   return (value: UniformTypeMap["bvec4"]) => gl.uniform4iv(location, value);
+
+      case "mat2":    return (value: UniformTypeMap["mat2"]) => gl.uniformMatrix2fv(location, false, value);
+      case "mat3":    return (value: UniformTypeMap["mat3"]) => gl.uniformMatrix3fv(location, false, value);
+      case "mat4":    return (value: UniformTypeMap["mat4"]) => gl.uniformMatrix4fv(location, false, value);
+
+      default:        return assertNever(type); // Ensures exhaustive handling
     }
   }
 }
@@ -118,9 +89,11 @@ export function getUniforms<U extends UniformsDefinitions>({
     }
 
     // Validate that the uniform type matches the expected type
-    // const type = getUniformTypeLabel(uniform.type);
-
     const type = WEBGL_TO_UNIFORM_TYPE[uniform.type];
+
+    if (type === undefined) {
+      throw new Error(`Unsupported uniform type: ${uniform.type}`);
+    }
 
     if (type !== uniforms[uniformName]) {
       throw new Error(`Uniform type mismatch: ${type} !== ${uniforms[uniformName]}. For uniform: ${uniform.name}`);
