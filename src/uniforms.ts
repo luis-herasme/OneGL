@@ -1,3 +1,5 @@
+export type Uniforms = Record<string, UniformTypeLabel>;
+
 export function getUniforms<U extends Uniforms>({
   gl,
   program,
@@ -69,8 +71,6 @@ export function getUniforms<U extends Uniforms>({
   };
 }
 
-export type Uniforms = Record<string, UniformTypeLabel>;
-
 type UniformTypeLabel = keyof UniformTypeMap;
 export type GetUniformType<T extends UniformTypeLabel> = UniformTypeMap[T];
 
@@ -117,77 +117,83 @@ type UniformTypeMap = {
   ];
 };
 
-const FLOAT = 0x1406;
-const FLOAT_VEC2 = 0x8b50;
-const FLOAT_VEC3 = 0x8b51;
-const FLOAT_VEC4 = 0x8b52;
+enum WebGLUniformType {
+  FLOAT = 0x1406,
+  FLOAT_VEC2 = 0x8b50,
+  FLOAT_VEC3 = 0x8b51,
+  FLOAT_VEC4 = 0x8b52,
 
-const INT = 0x1404;
-const INT_VEC2 = 0x8b53;
-const INT_VEC3 = 0x8b54;
-const INT_VEC4 = 0x8b55;
+  INT = 0x1404,
+  INT_VEC2 = 0x8b53,
+  INT_VEC3 = 0x8b54,
+  INT_VEC4 = 0x8b55,
 
-const UNSIGNED_INT = 0x1405;
-const UNSIGNED_INT_VEC2 = 0x8dc6;
-const UNSIGNED_INT_VEC3 = 0x8dc7;
-const UNSIGNED_INT_VEC4 = 0x8dc8;
+  UNSIGNED_INT = 0x1405,
+  UNSIGNED_INT_VEC2 = 0x8dc6,
+  UNSIGNED_INT_VEC3 = 0x8dc7,
+  UNSIGNED_INT_VEC4 = 0x8dc8,
 
-const BOOL = 0x8b56;
-const BOOL_VEC2 = 0x8b57;
-const BOOL_VEC3 = 0x8b58;
-const BOOL_VEC4 = 0x8b59;
+  BOOL = 0x8b56,
+  BOOL_VEC2 = 0x8b57,
+  BOOL_VEC3 = 0x8b58,
+  BOOL_VEC4 = 0x8b59,
 
-const FLOAT_MAT2 = 0x8b5a;
-const FLOAT_MAT3 = 0x8b5b;
-const FLOAT_MAT4 = 0x8b5c;
+  FLOAT_MAT2 = 0x8b5a,
+  FLOAT_MAT3 = 0x8b5b,
+  FLOAT_MAT4 = 0x8b5c,
+}
 
 const UNIFORM_SETTERS = {
-  [FLOAT]: floatSetter,
-  [FLOAT_VEC2]: floatVec2Setter,
-  [FLOAT_VEC3]: floatVec3Setter,
-  [FLOAT_VEC4]: floatVec4Setter,
+  [WebGLUniformType.FLOAT]: floatSetter,
+  [WebGLUniformType.FLOAT_VEC2]: floatVec2Setter,
+  [WebGLUniformType.FLOAT_VEC3]: floatVec3Setter,
+  [WebGLUniformType.FLOAT_VEC4]: floatVec4Setter,
 
-  [INT]: intSetter,
-  [INT_VEC2]: intVec2Setter,
-  [INT_VEC3]: intVec3Setter,
-  [INT_VEC4]: intVec4Setter,
+  [WebGLUniformType.INT]: intSetter,
+  [WebGLUniformType.INT_VEC2]: intVec2Setter,
+  [WebGLUniformType.INT_VEC3]: intVec3Setter,
+  [WebGLUniformType.INT_VEC4]: intVec4Setter,
 
-  [UNSIGNED_INT]: uintSetter,
-  [UNSIGNED_INT_VEC2]: uintVec2Setter,
-  [UNSIGNED_INT_VEC3]: uintVec3Setter,
-  [UNSIGNED_INT_VEC4]: uintVec4Setter,
+  [WebGLUniformType.UNSIGNED_INT]: uintSetter,
+  [WebGLUniformType.UNSIGNED_INT_VEC2]: uintVec2Setter,
+  [WebGLUniformType.UNSIGNED_INT_VEC3]: uintVec3Setter,
+  [WebGLUniformType.UNSIGNED_INT_VEC4]: uintVec4Setter,
 
-  [BOOL]: boolSetter,
-  [BOOL_VEC2]: boolVec2Setter,
-  [BOOL_VEC3]: boolVec3Setter,
-  [BOOL_VEC4]: boolVec4Setter,
+  [WebGLUniformType.BOOL]: boolSetter,
+  [WebGLUniformType.BOOL_VEC2]: boolVec2Setter,
+  [WebGLUniformType.BOOL_VEC3]: boolVec3Setter,
+  [WebGLUniformType.BOOL_VEC4]: boolVec4Setter,
 
-  [FLOAT_MAT2]: floatMat2Setter,
-  [FLOAT_MAT3]: floatMat3Setter,
-  [FLOAT_MAT4]: floatMat4Setter,
+  [WebGLUniformType.FLOAT_MAT2]: floatMat2Setter,
+  [WebGLUniformType.FLOAT_MAT3]: floatMat3Setter,
+  [WebGLUniformType.FLOAT_MAT4]: floatMat4Setter,
 } as const;
 
-const WEBGL_TO_UNIFORM_TYPE = {
-  [FLOAT]: "float",
-  [FLOAT_VEC2]: "vec2",
-  [FLOAT_VEC3]: "vec3",
-  [FLOAT_VEC4]: "vec4",
-  [INT]: "int",
-  [INT_VEC2]: "ivec2",
-  [INT_VEC3]: "ivec3",
-  [INT_VEC4]: "ivec4",
-  [UNSIGNED_INT]: "uint",
-  [UNSIGNED_INT_VEC2]: "uvec2",
-  [UNSIGNED_INT_VEC3]: "uvec3",
-  [UNSIGNED_INT_VEC4]: "uvec4",
-  [BOOL]: "bool",
-  [BOOL_VEC2]: "bvec2",
-  [BOOL_VEC3]: "bvec3",
-  [BOOL_VEC4]: "bvec4",
-  [FLOAT_MAT2]: "mat2",
-  [FLOAT_MAT3]: "mat3",
-  [FLOAT_MAT4]: "mat4",
-} as const;
+const WEBGL_TO_UNIFORM_TYPE: Record<WebGLUniformType, UniformTypeLabel> = {
+  [WebGLUniformType.FLOAT]: "float",
+  [WebGLUniformType.FLOAT_VEC2]: "vec2",
+  [WebGLUniformType.FLOAT_VEC3]: "vec3",
+  [WebGLUniformType.FLOAT_VEC4]: "vec4",
+
+  [WebGLUniformType.INT]: "int",
+  [WebGLUniformType.INT_VEC2]: "ivec2",
+  [WebGLUniformType.INT_VEC3]: "ivec3",
+  [WebGLUniformType.INT_VEC4]: "ivec4",
+
+  [WebGLUniformType.UNSIGNED_INT]: "uint",
+  [WebGLUniformType.UNSIGNED_INT_VEC2]: "uvec2",
+  [WebGLUniformType.UNSIGNED_INT_VEC3]: "uvec3",
+  [WebGLUniformType.UNSIGNED_INT_VEC4]: "uvec4",
+
+  [WebGLUniformType.BOOL]: "bool",
+  [WebGLUniformType.BOOL_VEC2]: "bvec2",
+  [WebGLUniformType.BOOL_VEC3]: "bvec3",
+  [WebGLUniformType.BOOL_VEC4]: "bvec4",
+
+  [WebGLUniformType.FLOAT_MAT2]: "mat2",
+  [WebGLUniformType.FLOAT_MAT3]: "mat3",
+  [WebGLUniformType.FLOAT_MAT4]: "mat4",
+};
 
 function getUniformTypeLabel(type: number) {
   const webglType = WEBGL_TO_UNIFORM_TYPE[type as keyof typeof WEBGL_TO_UNIFORM_TYPE];
