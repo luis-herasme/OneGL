@@ -1,8 +1,8 @@
-import { TransformMatrix } from "./matrix";
+import { Matrix } from "./matrix";
 
 export interface Camera {
-  transform: TransformMatrix;
-  projection: TransformMatrix;
+  transform: Matrix;
+  projection: Matrix;
 }
 
 type OrthographicProjection = {
@@ -15,8 +15,8 @@ type OrthographicProjection = {
 };
 
 export class OrthographicCamera implements Camera {
-  transform: TransformMatrix = TransformMatrix.identity();
-  projection: TransformMatrix = TransformMatrix.zero();
+  transform: Matrix = Matrix.identity();
+  projection: Matrix = Matrix.zero();
 
   left: number;
   right: number;
@@ -40,7 +40,7 @@ export class OrthographicCamera implements Camera {
     const { left, right, top, bottom, near, far } = this;
 
     // prettier-ignore
-    this.projection = new TransformMatrix([
+    this.projection = new Matrix([
         2 / (right - left), 0, 0, 0,
         0, 2 / (top - bottom), 0, 0,
         0, 0, 2 / (near - far), 0,

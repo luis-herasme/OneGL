@@ -1,4 +1,4 @@
-import { TransformMatrix } from "./matrix";
+import { Matrix } from "./matrix";
 import { Camera } from "./orthographic-camera";
 
 type PerspectiveProjection = {
@@ -9,8 +9,8 @@ type PerspectiveProjection = {
 };
 
 export class PerspectiveCamera implements Camera {
-  transform: TransformMatrix = TransformMatrix.identity();
-  projection: TransformMatrix = TransformMatrix.zero();
+  transform: Matrix = Matrix.identity();
+  projection: Matrix = Matrix.zero();
 
   fov: number;
   aspect: number;
@@ -27,7 +27,7 @@ export class PerspectiveCamera implements Camera {
   }
 
   updateProjectionMatrix() {
-    this.projection = TransformMatrix.zero();
+    this.projection = Matrix.zero();
 
     const f = 1.0 / Math.tan(this.fov / 2);
     const zFactor = this.far / (this.far - this.near);
