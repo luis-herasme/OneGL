@@ -3,7 +3,7 @@ import { BoxGeometry } from "./primitives";
 import { vertexShader, fragmentShader } from "./shaders";
 import { Material } from "./material";
 import { Mesh } from "./mesh";
-import { PerspectiveCamera } from "./perspective-camera";
+import { PerspectiveCamera } from "./camera/perspective-camera";
 import { Renderer, Texture } from "./texture";
 
 const canvas = new Canvas();

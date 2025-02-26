@@ -1,6 +1,6 @@
 import { Mesh } from "./mesh";
 import { Material } from "./material";
-import { Camera } from "./orthographic-camera";
+import { Camera } from "./camera/camera-interface";
 
 export class Texture {
   readonly gl: WebGL2RenderingContext;

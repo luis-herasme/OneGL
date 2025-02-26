@@ -1,5 +1,5 @@
-import { Matrix } from "./matrix";
-import { Camera } from "./orthographic-camera";
+import { Matrix } from "../matrix";
+import { Camera } from "./camera-interface";
 
 type PerspectiveProjection = {
   fov: number;

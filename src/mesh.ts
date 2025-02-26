@@ -1,7 +1,7 @@
 import { Matrix } from "./matrix";
 import { Material } from "./material";
 import { Geometry } from "./primitives";
-import { Camera } from "./orthographic-camera";
+import { Camera } from "./camera/camera-interface";
 
 type MeshMaterial = Material<
   {

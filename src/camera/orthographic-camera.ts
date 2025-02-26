@@ -1,9 +1,5 @@
-import { Matrix } from "./matrix";
-
-export interface Camera {
-  transform: Matrix;
-  projection: Matrix;
-}
+import { Matrix } from "../matrix";
+import { Camera } from "./camera-interface";
 
 type OrthographicProjection = {
   left: number;
