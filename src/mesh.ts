@@ -1,4 +1,4 @@
-import { TransformMatrix } from "./matrix";
+import { Matrix } from "./matrix";
 import { Material } from "./material";
 import { Geometry } from "./primitives";
 import { Camera } from "./orthographic-camera";
@@ -16,9 +16,12 @@ type MeshMaterial = Material<
 >;
 
 export class Mesh {
-  public transform: TransformMatrix = TransformMatrix.identity();
-  public material: MeshMaterial;
-  public geometry: Geometry;
+  translation = { x: 0, y: 0, z: 0 };
+  rotation = { x: 0, y: 0, z: 0 };
+  scale = { x: 1, y: 1, z: 1 };
+
+  material: MeshMaterial;
+  geometry: Geometry;
 
   constructor({ material, geometry }: { material: MeshMaterial; geometry: Geometry }) {
     this.material = material;
@@ -28,12 +31,23 @@ export class Mesh {
   public render(camera: Camera) {
     const gl = this.material.gl;
 
-    gl.viewport(0, 0, window.innerWidth, window.innerHeight);
     gl.useProgram(this.material.program);
 
+    const modelMatrix = Matrix.fromTransform(
+      this.translation.x,
+      this.translation.y,
+      this.translation.z,
+      this.rotation.x,
+      this.rotation.y,
+      this.rotation.z,
+      this.scale.x,
+      this.scale.y,
+      this.scale.z
+    );
+
+    this.material.uniforms.modelMatrix.set(modelMatrix);
     this.material.uniforms.projectionMatrix.set(camera.projection.data);
-    this.material.uniforms.cameraInverseMatrix.set(TransformMatrix.inverse(camera.transform.data));
-    this.material.uniforms.modelMatrix.set(this.transform.data);
+    this.material.uniforms.cameraInverseMatrix.set(Matrix.inverse(camera.transform.data));
 
     if (this.geometry.uvsBuffer == null) {
       this.geometry.uvsBuffer = gl.createBuffer();
