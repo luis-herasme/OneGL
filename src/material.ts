@@ -14,7 +14,6 @@ type MaterialData<A extends AttributesDefinitions, U extends UniformsDefinitions
 };
 
 type MaterialTexture = {
-  id: number;
   texture: Texture;
   uniformLocation: WebGLUniformLocation;
 };
@@ -37,11 +36,7 @@ export class Material<
         continue;
       }
 
-      if (item.texture === data.texture) {
-        return;
-      }
-
-      if (item.id === data.id) {
+      if (item.uniformLocation === data.uniformLocation) {
         item.texture = data.texture;
         return;
       }

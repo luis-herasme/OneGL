@@ -2,8 +2,6 @@ import { Material } from "./material";
 import { Texture } from "./texture";
 import { assertNever } from "./utils/assert-never";
 
-let id = 0;
-
 class Uniform<T extends UniformTypeLabel> {
   readonly gl: WebGL2RenderingContext;
   readonly type: UniformTypeLabel;
@@ -76,13 +74,11 @@ class Uniform<T extends UniformTypeLabel> {
       case "mat3":    return (value: UniformTypeMap["mat3"]) => gl.uniformMatrix3fv(location, false, value);
       case "mat4":    return (value: UniformTypeMap["mat4"]) => gl.uniformMatrix4fv(location, false, value);
 
-      case "sampler2D": return (value: UniformTypeMap["sampler2D"]) => {
-        material.textures.push({
+      case "sampler2D": return (value: UniformTypeMap["sampler2D"]) =>
+        material.setTexture({
           uniformLocation: location,
           texture: value,
-          id: id++,
         });
-      };
 
       default:        return assertNever(type); // Ensures exhaustive handling
     }
