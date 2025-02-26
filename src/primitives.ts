@@ -5,9 +5,9 @@ export interface Geometry {
   uvs: Float32Array;
 
   // Buffers
-  positionsBuffer: WebGLBuffer | null;
-  indicesBuffer: WebGLBuffer | null;
-  uvsBuffer: WebGLBuffer | null;
+  positionsBuffer: WebGLBuffer;
+  indicesBuffer: WebGLBuffer;
+  uvsBuffer: WebGLBuffer;
 }
 
 export class QuadGeometry implements Geometry {
@@ -15,11 +15,11 @@ export class QuadGeometry implements Geometry {
   public readonly indices: Uint16Array;
   public readonly uvs: Float32Array;
 
-  public positionsBuffer: WebGLBuffer | null = null;
-  public indicesBuffer: WebGLBuffer | null = null;
-  public uvsBuffer: WebGLBuffer | null = null;
+  public positionsBuffer: WebGLBuffer;
+  public indicesBuffer: WebGLBuffer;
+  public uvsBuffer: WebGLBuffer;
 
-  constructor({ width, height }: { width: number; height: number }) {
+  constructor({ gl, width, height }: { gl: WebGL2RenderingContext; width: number; height: number }) {
     // prettier-ignore
     this.positions = new Float32Array([
       -width / 2, -height / 2, 0,  // bottom-left
@@ -41,6 +41,10 @@ export class QuadGeometry implements Geometry {
       1, 1,  // top-right
       0, 1   // top-left
     ]);
+
+    this.positionsBuffer = gl.createBuffer();
+    this.indicesBuffer = gl.createBuffer();
+    this.uvsBuffer = gl.createBuffer;
   }
 }
 
@@ -49,11 +53,21 @@ export class BoxGeometry implements Geometry {
   public readonly indices: Uint16Array;
   public readonly uvs: Float32Array;
 
-  public positionsBuffer: WebGLBuffer | null = null;
-  public indicesBuffer: WebGLBuffer | null = null;
-  public uvsBuffer: WebGLBuffer | null = null;
+  public positionsBuffer: WebGLBuffer;
+  public indicesBuffer: WebGLBuffer;
+  public uvsBuffer: WebGLBuffer;
 
-  constructor({ width, height, depth }: { width: number; height: number; depth: number }) {
+  constructor({
+    gl,
+    width,
+    height,
+    depth,
+  }: {
+    gl: WebGL2RenderingContext;
+    width: number;
+    height: number;
+    depth: number;
+  }) {
     // prettier-ignore
     this.positions = new Float32Array([
       // Front face
@@ -119,5 +133,9 @@ export class BoxGeometry implements Geometry {
       // Left face UVs
       0, 0,  1, 0,  1, 1,  0, 1
     ]);
+
+    this.positionsBuffer = gl.createBuffer();
+    this.indicesBuffer = gl.createBuffer();
+    this.uvsBuffer = gl.createBuffer();
   }
 }

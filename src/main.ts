@@ -27,13 +27,21 @@ const material = new Material({
   },
 });
 
-const texture = await Texture.load({ gl: canvas.gl, src: "/t1.jpeg" });
+const texture = await Texture.load({
+  gl: canvas.gl,
+  src: "/t1.jpeg",
+});
+
+material.uniforms.modelTexture.set(texture);
 
 const box = new BoxGeometry({
+  gl: canvas.gl,
   width: 1,
   height: 1,
   depth: 1,
 });
+
+const renderer = new Renderer(canvas.gl);
 
 const camera = new PerspectiveCamera({
   aspect: window.innerHeight / window.innerWidth,
@@ -42,11 +50,7 @@ const camera = new PerspectiveCamera({
   far: 100,
 });
 
-material.uniforms.modelTexture.set(texture);
-
 const meshes: Mesh[] = [];
-
-const renderer = new Renderer(canvas.gl);
 
 for (let x = 0; x < 10; x++) {
   for (let y = 0; y < 10; y++) {

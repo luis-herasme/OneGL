@@ -47,27 +47,15 @@ export class Mesh {
     this.material.uniforms.projectionMatrix.set(camera.projection.data);
     this.material.uniforms.cameraInverseMatrix.set(Matrix.inverse(camera.transform.data));
 
-    if (this.geometry.uvsBuffer == null) {
-      this.geometry.uvsBuffer = gl.createBuffer();
-    }
-
     this.material.attributes.texcoord.set({
       value: this.geometry.uvs,
       buffer: this.geometry.uvsBuffer,
     });
 
-    if (this.geometry.positionsBuffer == null) {
-      this.geometry.positionsBuffer = gl.createBuffer();
-    }
-
     this.material.attributes.position.set({
       value: this.geometry.positions,
       buffer: this.geometry.positionsBuffer,
     });
-
-    if (this.geometry.indicesBuffer == null) {
-      this.geometry.indicesBuffer = gl.createBuffer();
-    }
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.geometry.indicesBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.geometry.indices), gl.STATIC_DRAW);
