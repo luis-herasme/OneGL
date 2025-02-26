@@ -6,7 +6,7 @@ type MatrixData = [
   number, number, number, number
 ];
 
-export class TransformMatrix {
+export class Matrix {
   data: MatrixData;
 
   constructor(data: MatrixData) {
@@ -14,28 +14,28 @@ export class TransformMatrix {
   }
 
   rotateX(radians: number): void {
-    this.data = TransformMatrix.multiply(this.data, TransformMatrix.rotateX(radians));
+    this.data = Matrix.multiply(this.data, Matrix.fromRotationX(radians));
   }
 
   rotateY(radians: number): void {
-    this.data = TransformMatrix.multiply(this.data, TransformMatrix.rotateY(radians));
+    this.data = Matrix.multiply(this.data, Matrix.fromRotationY(radians));
   }
 
   rotateZ(radians: number): void {
-    this.data = TransformMatrix.multiply(this.data, TransformMatrix.rotateZ(radians));
+    this.data = Matrix.multiply(this.data, Matrix.fromRotationZ(radians));
   }
 
   scale(x: number, y: number, z: number): void {
-    this.data = TransformMatrix.multiply(this.data, TransformMatrix.scale(x, y, z));
+    this.data = Matrix.multiply(this.data, Matrix.fromScale(x, y, z));
   }
 
   translate(x: number, y: number, z: number): void {
-    this.data = TransformMatrix.multiply(this.data, TransformMatrix.translation(x, y, z));
+    this.data = Matrix.multiply(this.data, Matrix.fromTranslation(x, y, z));
   }
 
-  static identity(): TransformMatrix {
+  static identity(): Matrix {
     // prettier-ignore
-    return new TransformMatrix([
+    return new Matrix([
       1, 0, 0, 0,
       0, 1, 0, 0,
       0, 0, 1, 0,
@@ -43,9 +43,9 @@ export class TransformMatrix {
     ]);
   }
 
-  static zero(): TransformMatrix {
+  static zero(): Matrix {
     // prettier-ignore
-    return new TransformMatrix([
+    return new Matrix([
       0, 0, 0, 0,
       0, 0, 0, 0,
       0, 0, 0, 0,
@@ -53,7 +53,7 @@ export class TransformMatrix {
     ]);
   }
 
-  static translation(x: number, y: number, z: number): MatrixData {
+  static fromTranslation(x: number, y: number, z: number): MatrixData {
     // prettier-ignore
     return [
       1, 0, 0, 0,
@@ -122,7 +122,7 @@ export class TransformMatrix {
     ];
   }
 
-  static rotateX(radians: number): MatrixData {
+  static fromRotationX(radians: number): MatrixData {
     const c = Math.cos(radians);
     const s = Math.sin(radians);
 
@@ -135,7 +135,7 @@ export class TransformMatrix {
     ];
   }
 
-  static rotateY(radians: number): MatrixData {
+  static fromRotationY(radians: number): MatrixData {
     const c = Math.cos(radians);
     const s = Math.sin(radians);
 
@@ -148,7 +148,7 @@ export class TransformMatrix {
     ];
   }
 
-  static rotateZ(radians: number): MatrixData {
+  static fromRotationZ(radians: number): MatrixData {
     const c = Math.cos(radians);
     const s = Math.sin(radians);
 
@@ -161,13 +161,85 @@ export class TransformMatrix {
     ];
   }
 
-  static scale(x: number, y: number, z: number): MatrixData {
+  static fromRotation(x: number, y: number, z: number): MatrixData {
+    const cosX = Math.cos(x);
+    const sinX = Math.sin(x);
+    const cosY = Math.cos(y);
+    const sinY = Math.sin(y);
+    const cosZ = Math.cos(z);
+    const sinZ = Math.sin(z);
+
+    // prettier-ignore
+    return [
+      cosY * cosZ, -cosY * sinZ, sinY, 0,
+      cosX * sinZ + sinX * sinY * cosZ, cosX * cosZ - sinX * sinY * sinZ, -sinX * cosY, 0,
+      sinX * sinZ - cosX * sinY * cosZ, sinX * cosZ + cosX * sinY * sinZ, cosX * cosY, 0,
+      0, 0, 0, 1
+    ];
+  }
+
+  static fromScale(x: number, y: number, z: number): MatrixData {
     // prettier-ignore
     return [
       x, 0, 0, 0,
       0, y, 0, 0,
       0, 0, z, 0,
       0, 0, 0, 1
+    ];
+  }
+
+  static fromTransform(
+    x: number,
+    y: number,
+    z: number,
+    rotationX: number,
+    rotationY: number,
+    rotationZ: number,
+    scaleX: number,
+    scaleY: number,
+    scaleZ: number
+  ): MatrixData {
+    // Precompute cosines and sines for each rotation angle.
+    const cx = Math.cos(rotationX);
+    const sx = Math.sin(rotationX);
+    const cy = Math.cos(rotationY);
+    const sy = Math.sin(rotationY);
+    const cz = Math.cos(rotationZ);
+    const sz = Math.sin(rotationZ);
+
+    // Compute the composite rotation matrix using R = Rz * Ry * Rx.
+    const r00 = cz * cy;
+    const r01 = cz * sy * sx - sz * cx;
+    const r02 = cz * sy * cx + sz * sx;
+
+    const r10 = sz * cy;
+    const r11 = sz * sy * sx + cz * cx;
+    const r12 = sz * sy * cx - cz * sx;
+
+    const r20 = -sy;
+    const r21 = cy * sx;
+    const r22 = cy * cx;
+
+    // Apply scaling to the rotation matrix.
+    // Note: The scaling is applied per axis, affecting each column.
+    const m00 = r00 * scaleX;
+    const m10 = r10 * scaleX;
+    const m20 = r20 * scaleX;
+
+    const m01 = r01 * scaleY;
+    const m11 = r11 * scaleY;
+    const m21 = r21 * scaleY;
+
+    const m02 = r02 * scaleZ;
+    const m12 = r12 * scaleZ;
+    const m22 = r22 * scaleZ;
+
+    // prettier-ignore
+    return [
+      m00, m10, m20, 0,  // Column 0
+      m01, m11, m21, 0,  // Column 1
+      m02, m12, m22, 0,  // Column 2
+      x,   y,   z,   1   // Column 3 (translation)
     ];
   }
 
