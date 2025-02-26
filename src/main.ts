@@ -4,7 +4,7 @@ import { vertexShader, fragmentShader } from "./shaders";
 import { Material } from "./material";
 import { Mesh } from "./mesh";
 import { PerspectiveCamera } from "./perspective-camera";
-import { Texture } from "./texture";
+import { Renderer, Texture } from "./texture";
 
 const canvas = new Canvas();
 
@@ -22,7 +22,7 @@ const material = new Material({
     modelMatrix: "mat4",
     projectionMatrix: "mat4",
     cameraInverseMatrix: "mat4",
-    uSampler: "sampler2D",
+    modelTexture: "sampler2D",
   },
 });
 
@@ -34,25 +34,36 @@ const box = new BoxGeometry({
   depth: 1,
 });
 
-const mesh = new Mesh({ material, geometry: box });
-
 const camera = new PerspectiveCamera({
   aspect: window.innerHeight / window.innerWidth,
   fov: (45 * Math.PI) / 180,
   near: 0.1,
-  far: 10,
+  far: 100,
 });
 
-camera.transform.translate(0, 0, -5);
-material.gl.useProgram(material.program);
-material.uniforms.uSampler.set(texture);
+material.uniforms.modelTexture.set(texture);
+
+const meshes: Mesh[] = [];
+
+const renderer = new Renderer(canvas.gl);
+for (let x = 0; x < 10; x++) {
+  for (let y = 0; y < 10; y++) {
+    const mesh = new Mesh({ material, geometry: box });
+    mesh.translation = { x: 5 - x, y: 5 - y, z: 15 };
+    mesh.scale = { x: 0.5, y: 0.5, z: 0.5 };
+    meshes.push(mesh);
+  }
+}
 
 function render() {
   canvas.clearScreen();
-  mesh.render(camera);
 
-  mesh.transform.rotateZ(0.002);
-  mesh.transform.rotateX(0.001);
+  for (const mesh of meshes) {
+    mesh.rotation.x += 0.01;
+    mesh.rotation.y += 0.02;
+    renderer.render(mesh, camera);
+  }
+
   camera.updateProjectionMatrix();
 
   requestAnimationFrame(render);

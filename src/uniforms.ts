@@ -1,7 +1,8 @@
+import { Material } from "./material";
 import { Texture } from "./texture";
 import { assertNever } from "./utils/assert-never";
 
-const textureUnits: WeakMap<WebGLProgram, number> = new WeakMap();
+let id = 0;
 
 class Uniform<T extends UniformTypeLabel> {
   readonly gl: WebGL2RenderingContext;
@@ -9,9 +10,8 @@ class Uniform<T extends UniformTypeLabel> {
   readonly location: WebGLUniformLocation;
 
   readonly name: string;
-  readonly unit: number | undefined;
   readonly program: WebGLProgram;
-
+  readonly material: Material;
   readonly set: (value: UniformTypeMap[T]) => void;
 
   constructor({
@@ -19,18 +19,20 @@ class Uniform<T extends UniformTypeLabel> {
     type,
     name,
     program,
+    material,
   }: {
     gl: WebGL2RenderingContext;
     type: UniformTypeLabel;
     name: string;
     program: WebGLProgram;
+    material: Material;
   }) {
     this.gl = gl;
     this.type = type;
     this.name = name;
     this.program = program;
+    this.material = material;
 
-    this.unit = this.getUnit();
     this.location = this.getLocation();
     this.set = this.createSetterFunction() as (value: UniformTypeMap[T]) => void;
   }
@@ -45,25 +47,8 @@ class Uniform<T extends UniformTypeLabel> {
     return location;
   }
 
-  private getUnit() {
-    if (this.type !== "sampler2D") {
-      return undefined;
-    }
-
-    let unit = textureUnits.get(this.program);
-
-    if (unit === undefined) {
-      unit = 0;
-    } else {
-      unit = unit + 1;
-    }
-
-    textureUnits.set(this.program, unit);
-    return unit;
-  }
-
   private createSetterFunction() {
-    const { gl, location, type } = this;
+    const { gl, location, type, material } = this;
 
     // prettier-ignore
     switch (type) {
@@ -92,9 +77,11 @@ class Uniform<T extends UniformTypeLabel> {
       case "mat4":    return (value: UniformTypeMap["mat4"]) => gl.uniformMatrix4fv(location, false, value);
 
       case "sampler2D": return (value: UniformTypeMap["sampler2D"]) => {
-        this.gl.activeTexture(this.gl.TEXTURE0 + this.unit!);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, value.texture);
-        gl.uniform1i(location, this.unit!);
+        material.textures.push({
+          uniformLocation: location,
+          texture: value,
+          id: id++,
+        });
       };
 
       default:        return assertNever(type); // Ensures exhaustive handling
@@ -111,12 +98,14 @@ export function getUniforms<U extends UniformsDefinitions>({
   gl,
   program,
   uniforms,
+  material,
 }: {
   gl: WebGL2RenderingContext;
   program: WebGLProgram;
   uniforms: U;
+  material: Material;
 }): Uniforms<U> {
-  const uniformsMap = {} as Uniforms<U>;
+  const uniformsMap: Record<string, Uniform<any>> = {};
   const numberOfUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
   const uniformsNotFound = new Set(Object.keys(uniforms));
 
@@ -135,9 +124,6 @@ export function getUniforms<U extends UniformsDefinitions>({
       continue;
     }
 
-    // After the previous check, we can safely assume that uniform.name is a keyof U
-    const name = uniform.name as keyof U;
-
     // Validate that the uniform type matches the expected type
     const type = WEBGL_TO_UNIFORM_TYPE[uniform.type];
 
@@ -145,15 +131,16 @@ export function getUniforms<U extends UniformsDefinitions>({
       throw new Error(`Unsupported uniform type: ${uniform.type}`);
     }
 
-    if (type !== uniforms[name]) {
-      throw new Error(`Uniform type mismatch: ${type} !== ${uniforms[name]}. For uniform: ${uniform.name}`);
+    if (type !== uniforms[uniform.name]) {
+      throw new Error(`Uniform type mismatch: ${type} !== ${uniforms[uniform.name]}. For uniform: ${uniform.name}`);
     }
 
-    uniformsMap[name] = new Uniform({
+    uniformsMap[uniform.name] = new Uniform({
       gl,
       type,
       name: uniform.name,
       program,
+      material,
     });
   }
 
@@ -164,12 +151,12 @@ export function getUniforms<U extends UniformsDefinitions>({
       if (uniforms[name] === "sampler2D") {
         uniformsNotFound.delete(name);
 
-        // @ts-ignore
         uniformsMap[name] = new Uniform({
           gl,
           type: "sampler2D",
           name,
           program,
+          material,
         });
       }
     }
@@ -177,7 +164,7 @@ export function getUniforms<U extends UniformsDefinitions>({
     throw new Error(`Missing uniforms: ${Array.from(uniformsNotFound).join(", ")}`);
   }
 
-  return uniformsMap;
+  return uniformsMap as Uniforms<U>;
 }
 
 type UniformTypeLabel = keyof UniformTypeMap;
