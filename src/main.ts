@@ -1,4 +1,4 @@
-import Canvas from "./renderer";
+import Canvas from "./canvas";
 import { BoxGeometry } from "./primitives";
 import { vertexShader, fragmentShader } from "./shaders";
 import { Material } from "./material";
