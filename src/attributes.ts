@@ -9,7 +9,6 @@ class Attribute<T> {
   readonly type: AttributeTypeLabel;
   readonly program: WebGLProgram;
   readonly location: number;
-
   set: (value: BufferOptions<T>) => void;
 
   constructor(gl: WebGL2RenderingContext, name: string, type: AttributeTypeLabel, program: WebGLProgram) {
