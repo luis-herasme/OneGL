@@ -1,6 +1,6 @@
 import { Material } from "./material";
-import { TextureManager } from "./texture";
 import { Camera } from "./camera/camera-interface";
+import { TextureManager } from "./texture-manager";
 
 type Renderable = {
   material: Material<any, any>;
