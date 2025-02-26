@@ -28,27 +28,6 @@ export class Material<
   public readonly attributes: Attributes<A>;
   public readonly textures: MaterialTexture[] = [];
 
-  setTexture(data: MaterialTexture) {
-    for (let i = 0; i < this.textures.length; i++) {
-      const item = this.textures[i];
-
-      if (item === undefined) {
-        continue;
-      }
-
-      if (item.uniformLocation === data.uniformLocation) {
-        item.texture = data.texture;
-        return;
-      }
-    }
-
-    this.textures.push(data);
-  }
-
-  public use() {
-    this.gl.useProgram(this.program);
-  }
-
   constructor(data: MaterialData<A, U>) {
     this.gl = data.gl;
 
@@ -70,5 +49,26 @@ export class Material<
       program: this.program,
       attributes: data.attributes,
     });
+  }
+
+  use() {
+    this.gl.useProgram(this.program);
+  }
+
+  setTexture(data: MaterialTexture) {
+    for (let i = 0; i < this.textures.length; i++) {
+      const item = this.textures[i];
+
+      if (item === undefined) {
+        continue;
+      }
+
+      if (item.uniformLocation === data.uniformLocation) {
+        item.texture = data.texture;
+        return;
+      }
+    }
+
+    this.textures.push(data);
   }
 }
