@@ -12,6 +12,7 @@ type OrthographicProjection = {
 
 export class OrthographicCamera implements Camera {
   transform: Matrix = Matrix.identity();
+  inverseTransform: Matrix = Matrix.identity();
   projection: Matrix = Matrix.zero();
 
   left: number;

@@ -1,3 +1,4 @@
+import { Matrix } from "./matrix";
 import { Material } from "./material";
 import { Camera } from "./camera/camera-interface";
 import { TextureManager } from "./texture-manager";
@@ -15,6 +16,9 @@ export class Renderer {
   }
 
   render(renderables: Renderable[], camera: Camera) {
+    camera.updateProjectionMatrix();
+    camera.inverseTransform.data = Matrix.inverse(camera.transform.data);
+
     for (const renderable of renderables) {
       renderable.material.use();
       this.textureManager.linkTexturesToUnits(renderable.material);

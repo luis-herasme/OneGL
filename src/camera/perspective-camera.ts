@@ -10,6 +10,7 @@ type PerspectiveProjection = {
 
 export class PerspectiveCamera implements Camera {
   transform: Matrix = Matrix.identity();
+  inverseTransform: Matrix = Matrix.identity();
   projection: Matrix = Matrix.zero();
 
   fov: number;
