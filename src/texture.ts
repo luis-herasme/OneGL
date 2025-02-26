@@ -1,6 +1,4 @@
-import { Mesh } from "./mesh";
 import { Material } from "./material";
-import { Camera } from "./camera/camera-interface";
 
 export class Texture {
   readonly gl: WebGL2RenderingContext;
@@ -113,19 +111,5 @@ export class TextureManager {
     this.gl.activeTexture(this.gl.TEXTURE0 + unit);
     this.gl.bindTexture(this.gl.TEXTURE_2D, texture.texture);
     this.bindedTextures[unit] = texture;
-  }
-}
-
-export class Renderer {
-  private readonly textureManager: TextureManager;
-
-  constructor(gl: WebGL2RenderingContext) {
-    this.textureManager = new TextureManager(gl);
-  }
-
-  render(mesh: Mesh, camera: Camera) {
-    mesh.material.gl.useProgram(mesh.material.program);
-    this.textureManager.linkTexturesToUnits(mesh.material);
-    mesh.render(camera);
   }
 }

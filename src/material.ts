@@ -50,6 +50,10 @@ export class Material<
     this.textures.push(data);
   }
 
+  public use() {
+    this.gl.useProgram(this.program);
+  }
+
   constructor(data: MaterialData<A, U>) {
     this.gl = data.gl;
 

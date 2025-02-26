@@ -4,7 +4,8 @@ import { vertexShader, fragmentShader } from "./shaders";
 import { Material } from "./material";
 import { Mesh } from "./mesh";
 import { PerspectiveCamera } from "./camera/perspective-camera";
-import { Renderer, Texture } from "./texture";
+import { Texture } from "./texture";
+import { Renderer } from "./renderer";
 
 const canvas = new Canvas();
 
@@ -46,6 +47,7 @@ material.uniforms.modelTexture.set(texture);
 const meshes: Mesh[] = [];
 
 const renderer = new Renderer(canvas.gl);
+
 for (let x = 0; x < 10; x++) {
   for (let y = 0; y < 10; y++) {
     const mesh = new Mesh({ material, geometry: box });
@@ -64,8 +66,9 @@ function render() {
   for (const mesh of meshes) {
     mesh.rotation.x += 0.01;
     mesh.rotation.y += 0.02;
-    renderer.render(mesh, camera);
   }
+
+  renderer.render(meshes, camera);
 
   requestAnimationFrame(render);
 }
