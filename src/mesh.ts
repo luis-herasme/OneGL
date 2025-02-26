@@ -28,6 +28,8 @@ export class Mesh {
     this.geometry = geometry;
   }
 
+  binded = false;
+
   public render(camera: Camera) {
     const gl = this.material.gl;
 
@@ -45,20 +47,24 @@ export class Mesh {
 
     this.material.uniforms.modelMatrix.set(modelMatrix);
     this.material.uniforms.projectionMatrix.set(camera.projection.data);
-    this.material.uniforms.cameraInverseMatrix.set(Matrix.inverse(camera.transform.data));
+    this.material.uniforms.cameraInverseMatrix.set(camera.inverseTransform.data);
 
-    this.material.attributes.texcoord.set({
-      value: this.geometry.uvs,
-      buffer: this.geometry.uvsBuffer,
-    });
+    if (this.binded === false) {
+      this.material.attributes.texcoord.set({
+        value: this.geometry.uvs,
+        buffer: this.geometry.uvsBuffer,
+      });
 
-    this.material.attributes.position.set({
-      value: this.geometry.positions,
-      buffer: this.geometry.positionsBuffer,
-    });
+      this.material.attributes.position.set({
+        value: this.geometry.positions,
+        buffer: this.geometry.positionsBuffer,
+      });
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.geometry.indicesBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.geometry.indices), gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.geometry.indicesBuffer);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.geometry.indices), gl.STATIC_DRAW);
+      this.binded = true;
+    }
+
     gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
   }
 }
