@@ -31,8 +31,6 @@ export class Mesh {
   public render(camera: Camera) {
     const gl = this.material.gl;
 
-    gl.useProgram(this.material.program);
-
     const modelMatrix = Matrix.fromTransform(
       this.translation.x,
       this.translation.y,
@@ -53,13 +51,19 @@ export class Mesh {
       this.geometry.uvsBuffer = gl.createBuffer();
     }
 
-    this.material.setAttribute("texcoord", this.geometry.uvs, this.geometry.uvsBuffer);
+    this.material.attributes.texcoord.set({
+      value: this.geometry.uvs,
+      buffer: this.geometry.uvsBuffer,
+    });
 
     if (this.geometry.positionsBuffer == null) {
       this.geometry.positionsBuffer = gl.createBuffer();
     }
 
-    this.material.setAttribute("position", this.geometry.positions, this.geometry.positionsBuffer);
+    this.material.attributes.position.set({
+      value: this.geometry.positions,
+      buffer: this.geometry.positionsBuffer,
+    });
 
     if (this.geometry.indicesBuffer == null) {
       this.geometry.indicesBuffer = gl.createBuffer();

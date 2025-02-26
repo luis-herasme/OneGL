@@ -58,13 +58,14 @@ for (let x = 0; x < 10; x++) {
 function render() {
   canvas.clearScreen();
 
+  camera.transform.rotateZ(0.01);
+  camera.updateProjectionMatrix();
+
   for (const mesh of meshes) {
     mesh.rotation.x += 0.01;
     mesh.rotation.y += 0.02;
     renderer.render(mesh, camera);
   }
-
-  camera.updateProjectionMatrix();
 
   requestAnimationFrame(render);
 }

@@ -1,9 +1,9 @@
 import { Texture } from "./texture";
 import { createWebGLProgram } from "./program";
 import { UniformsDefinitions, getUniforms, Uniforms } from "./uniforms";
-import { Attributes, GetAttributeType, getAttributes } from "./attributes";
+import { AttributesDefinitions, getAttributes, Attributes } from "./attributes";
 
-type MaterialData<A extends Attributes, U extends UniformsDefinitions> = {
+type MaterialData<A extends AttributesDefinitions, U extends UniformsDefinitions> = {
   gl: WebGL2RenderingContext;
   shader: {
     vertex: string;
@@ -19,26 +19,15 @@ type MaterialTexture = {
   uniformLocation: WebGLUniformLocation;
 };
 
-export class Material<A extends Attributes = Attributes, U extends UniformsDefinitions = UniformsDefinitions> {
+export class Material<
+  A extends AttributesDefinitions = AttributesDefinitions,
+  U extends UniformsDefinitions = UniformsDefinitions
+> {
+  public readonly gl: WebGL2RenderingContext;
   public readonly program: WebGLProgram;
   public readonly uniforms: Uniforms<U>;
-
-  public readonly attributes: {
-    locations: Record<keyof A, number>;
-    setters: {
-      [K in keyof A]: (value: GetAttributeType<A[K]>, buffer: WebGLBuffer) => void;
-    };
-  };
-
-  public readonly setAttribute: <K extends keyof A>(
-    name: K,
-    value: GetAttributeType<A[K]>,
-    buffer: WebGLBuffer
-  ) => void;
-
-  public readonly gl: WebGL2RenderingContext;
-
-  textures: MaterialTexture[] = [];
+  public readonly attributes: Attributes<A>;
+  public readonly textures: MaterialTexture[] = [];
 
   setTexture(data: MaterialTexture) {
     for (let i = 0; i < this.textures.length; i++) {
@@ -62,31 +51,25 @@ export class Material<A extends Attributes = Attributes, U extends UniformsDefin
   }
 
   constructor(data: MaterialData<A, U>) {
-    const { gl } = data;
+    this.gl = data.gl;
 
-    const program = createWebGLProgram({
-      gl,
+    this.program = createWebGLProgram({
+      gl: this.gl,
       vertexSource: data.shader.vertex,
       fragmentSource: data.shader.fragment,
     });
 
-    const uniforms = getUniforms({
-      gl,
-      program,
+    this.uniforms = getUniforms({
+      gl: this.gl,
+      program: this.program,
       uniforms: data.uniforms,
       material: this as any,
     });
 
-    const attributes = getAttributes({
-      gl,
-      program,
+    this.attributes = getAttributes({
+      gl: this.gl,
+      program: this.program,
       attributes: data.attributes,
     });
-
-    this.gl = gl;
-    this.program = program;
-    this.uniforms = uniforms;
-    this.attributes = attributes;
-    this.setAttribute = (name, value, buffer) => attributes.setters[name](value, buffer);
   }
 }

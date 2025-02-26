@@ -124,6 +124,7 @@ export class Renderer {
   }
 
   render(mesh: Mesh, camera: Camera) {
+    mesh.material.gl.useProgram(mesh.material.program);
     this.textureManager.linkTexturesToUnits(mesh.material);
     mesh.render(camera);
   }

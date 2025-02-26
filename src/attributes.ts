@@ -1,6 +1,54 @@
-export type Attributes = Record<string, AttributeTypeLabel>;
+export type AttributesDefinitions = Record<string, AttributeTypeLabel>;
+export type Attributes<A extends AttributesDefinitions> = {
+  [K in keyof A]: Attribute<GetAttributeType<A[K]>>;
+};
 
-export function getAttributes<A extends Attributes>({
+class Attribute<T> {
+  readonly gl: WebGL2RenderingContext;
+  readonly name: string;
+  readonly type: AttributeTypeLabel;
+  readonly program: WebGLProgram;
+  readonly location: number;
+
+  set: (value: BufferOptions<T>) => void;
+
+  constructor(gl: WebGL2RenderingContext, name: string, type: AttributeTypeLabel, program: WebGLProgram) {
+    this.gl = gl;
+    this.name = name;
+    this.type = type;
+    this.program = program;
+
+    this.location = this.getLocation();
+    this.validateAttributeCompatibility();
+    this.set = getAttributeSetter(this.type)(this.gl, this.location);
+  }
+
+  private getLocation() {
+    const location = this.gl.getAttribLocation(this.program, this.name);
+
+    if (location === -1) {
+      throw new Error(`Failed to get attribute location: ${this.name}`);
+    }
+
+    return location;
+  }
+
+  private validateAttributeCompatibility() {
+    const attribute = this.gl.getActiveAttrib(this.program, this.location);
+
+    if (!attribute) {
+      throw new Error(`Failed to get attribute data: ${this.name}`);
+    }
+
+    const type = getAttributeTypeLabel(attribute.type);
+
+    if (type !== this.type) {
+      throw new Error(`Attribute type mismatch: ${this.type} !== ${type}. For attribute: ${this.name}`);
+    }
+  }
+}
+
+export function getAttributes<A extends AttributesDefinitions>({
   gl,
   program,
   attributes,
@@ -8,51 +56,14 @@ export function getAttributes<A extends Attributes>({
   gl: WebGL2RenderingContext;
   program: WebGLProgram;
   attributes: A;
-}): {
-  locations: Record<keyof A, number>;
-  setters: Record<keyof A, (value: GetAttributeType<A[keyof A]>, buffer: WebGLBuffer) => void>;
-} {
-  const locations = {} as Record<keyof A, number>;
-  const setters = {} as Record<keyof A, (value: GetAttributeType<A[keyof A]>, buffer: WebGLBuffer) => void>;
+}): Attributes<A> {
+  const attributesMap = {} as Record<string, Attribute<any>>;
 
-  for (const attributeName in attributes) {
-    // Get the location of the attribute
-    const location = gl.getAttribLocation(program, attributeName);
-
-    if (location === -1) {
-      throw new Error(`Failed to get attribute location: ${attributeName}`);
-    }
-
-    locations[attributeName] = location;
-
-    // Validate that the attribute type matches the expected type
-    const attribute = gl.getActiveAttrib(program, location);
-
-    if (!attribute) {
-      throw new Error(`Failed to get attribute data: ${attributeName}`);
-    }
-
-    const typeLabel = getAttributeTypeLabel(attribute.type);
-    const type = attributes[attributeName];
-
-    if (typeLabel !== type) {
-      throw new Error(`Attribute type mismatch: ${typeLabel} !== ${type}. For attribute: ${attributeName}`);
-    }
-
-    // Create a setter for the attribute
-    const bufferSetter = getAttributeSetter(attribute.type)(gl, location);
-
-    setters[attributeName] = (value: GetAttributeType<A[keyof A]>, buffer: WebGLBuffer) => {
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, value, gl.STATIC_DRAW);
-      bufferSetter({ buffer });
-    };
+  for (const [name, type] of Object.entries(attributes)) {
+    attributesMap[name] = new Attribute(gl, name, type, program);
   }
 
-  return {
-    locations,
-    setters,
-  };
+  return attributesMap as Attributes<A>;
 }
 
 enum WebGLAttributeType {
@@ -147,18 +158,18 @@ type AttributeTypeLabel = keyof AttributeTypeMap;
 export type GetAttributeType<T extends AttributeTypeLabel> = AttributeTypeMap[T];
 
 const ATTRIBUTE_SETTERS = {
-  [WebGLAttributeType.FLOAT]: floatAttribSetterGenerator(1),
-  [WebGLAttributeType.FLOAT_VEC2]: floatAttribSetterGenerator(2),
-  [WebGLAttributeType.FLOAT_VEC3]: floatAttribSetterGenerator(3),
-  [WebGLAttributeType.FLOAT_VEC4]: floatAttribSetterGenerator(4),
+  float: floatAttribSetterGenerator(1),
+  vec2: floatAttribSetterGenerator(2),
+  vec3: floatAttribSetterGenerator(3),
+  vec4: floatAttribSetterGenerator(4),
 
-  [WebGLAttributeType.INT]: intAttribSetterGenerator(1),
-  [WebGLAttributeType.INT_VEC2]: intAttribSetterGenerator(2),
-  [WebGLAttributeType.INT_VEC3]: intAttribSetterGenerator(3),
-  [WebGLAttributeType.INT_VEC4]: intAttribSetterGenerator(4),
+  int: intAttribSetterGenerator(1),
+  ivec2: intAttribSetterGenerator(2),
+  ivec3: intAttribSetterGenerator(3),
+  ivec4: intAttribSetterGenerator(4),
 } as const;
 
-function getAttributeSetter(type: number) {
+function getAttributeSetter(type: string) {
   const setter = ATTRIBUTE_SETTERS[type as keyof typeof ATTRIBUTE_SETTERS];
 
   if (!setter) {
@@ -168,18 +179,20 @@ function getAttributeSetter(type: number) {
   return setter;
 }
 
-type BufferOptions = {
+type BufferOptions<T> = {
   buffer: WebGLBuffer;
   normalize?: boolean;
   stride?: number;
   offset?: number;
   divisor?: number;
+  value: T;
 };
 
 function floatAttribSetterGenerator(size: number) {
   return function floatAttribSetterCreator(gl: WebGL2RenderingContext, index: number) {
-    return function floatAttribSetter(value: BufferOptions) {
+    return function floatAttribSetter(value: BufferOptions<any>) {
       gl.bindBuffer(gl.ARRAY_BUFFER, value.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, value.value, gl.STATIC_DRAW);
       gl.enableVertexAttribArray(index);
       gl.vertexAttribPointer(index, size, gl.FLOAT, value.normalize || false, value.stride || 0, value.offset || 0);
       gl.vertexAttribDivisor(index, value.divisor || 0);
@@ -189,8 +202,9 @@ function floatAttribSetterGenerator(size: number) {
 
 function intAttribSetterGenerator(size: number) {
   return function intAttribSetterCreator(gl: WebGL2RenderingContext, index: number) {
-    return function intAttribSetter(value: BufferOptions) {
+    return function intAttribSetter(value: BufferOptions<any>) {
       gl.bindBuffer(gl.ARRAY_BUFFER, value.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, value.value, gl.STATIC_DRAW);
       gl.enableVertexAttribArray(index);
       gl.vertexAttribIPointer(index, size, gl.INT, value.stride || 0, value.offset || 0);
       gl.vertexAttribDivisor(index, value.divisor || 0);
