@@ -1,12 +1,11 @@
-import { Material } from "./material";
 import { Texture } from "./texture";
+import { Material } from "./material";
 import { assertNever } from "./utils/assert-never";
 
 class Uniform<T extends UniformTypeLabel> {
   readonly gl: WebGL2RenderingContext;
   readonly type: UniformTypeLabel;
   readonly location: WebGLUniformLocation;
-
   readonly name: string;
   readonly program: WebGLProgram;
   readonly material: Material;
@@ -142,21 +141,6 @@ export function getUniforms<U extends UniformsDefinitions>({
 
   // Check for any missing uniforms
   if (uniformsNotFound.size > 0) {
-    // Ignore sampler2D uniforms
-    for (const name of uniformsNotFound) {
-      if (uniforms[name] === "sampler2D") {
-        uniformsNotFound.delete(name);
-
-        uniformsMap[name] = new Uniform({
-          gl,
-          type: "sampler2D",
-          name,
-          program,
-          material,
-        });
-      }
-    }
-
     throw new Error(`Missing uniforms: ${Array.from(uniformsNotFound).join(", ")}`);
   }
 
