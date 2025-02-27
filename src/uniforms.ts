@@ -4,23 +4,24 @@ import { assertNever } from "./utils/assert-never";
 
 class Uniform<T extends UniformTypeLabel> {
   readonly gl: WebGL2RenderingContext;
-  readonly type: UniformTypeLabel;
-  readonly location: WebGLUniformLocation;
   readonly name: string;
+  readonly type: T;
   readonly program: WebGLProgram;
   readonly material: Material;
+
+  readonly location: WebGLUniformLocation;
   readonly set: (value: UniformTypeMap[T]) => void;
 
   constructor({
     gl,
-    type,
     name,
+    type,
     program,
     material,
   }: {
     gl: WebGL2RenderingContext;
-    type: UniformTypeLabel;
     name: string;
+    type: T;
     program: WebGLProgram;
     material: Material;
   }) {
@@ -31,6 +32,7 @@ class Uniform<T extends UniformTypeLabel> {
     this.material = material;
 
     this.location = this.getLocation();
+    this.validateUniformCompatibility();
     this.set = this.createSetterFunction() as (value: UniformTypeMap[T]) => void;
   }
 
@@ -42,6 +44,38 @@ class Uniform<T extends UniformTypeLabel> {
     }
 
     return location;
+  }
+
+  private validateUniformCompatibility() {
+    const information = this.getInformation();
+
+    if (!information) {
+      throw new Error(`Failed to get uniform data: ${this.name}`);
+    }
+
+    const type = WEBGL_TO_UNIFORM_TYPE[information.type];
+
+    if (type === undefined) {
+      throw new Error(`Unsupported uniform type: ${information.type}`);
+    }
+
+    if (type !== this.type) {
+      throw new Error(`Uniform type mismatch: ${type} !== ${this.type}. For uniform: ${information.name}`);
+    }
+  }
+
+  private getInformation(): WebGLActiveInfo | null {
+    const numUniforms = this.gl.getProgramParameter(this.program, this.gl.ACTIVE_UNIFORMS);
+
+    for (let i = 0; i < numUniforms; i++) {
+      const info = this.gl.getActiveUniform(this.program, i);
+
+      if (info && info.name === this.name) {
+        return info;
+      }
+    }
+
+    return null;
   }
 
   private createSetterFunction() {
@@ -101,47 +135,9 @@ export function getUniforms<U extends UniformsDefinitions>({
   material: Material;
 }): Uniforms<U> {
   const uniformsMap: Record<string, Uniform<any>> = {};
-  const numberOfUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-  const uniformsNotFound = new Set(Object.keys(uniforms));
 
-  for (let i = 0; i < numberOfUniforms; i++) {
-    const uniform = gl.getActiveUniform(program, i);
-
-    if (!uniform) {
-      throw new Error(`Failed to get uniform at index: ${i}`);
-    }
-
-    // Check that the uniform found was declared by the user
-    if (uniformsNotFound.has(uniform.name)) {
-      uniformsNotFound.delete(uniform.name);
-    } else {
-      console.warn(`Unused uniform: ${uniform.name}`);
-      continue;
-    }
-
-    // Validate that the uniform type matches the expected type
-    const type = WEBGL_TO_UNIFORM_TYPE[uniform.type];
-
-    if (type === undefined) {
-      throw new Error(`Unsupported uniform type: ${uniform.type}`);
-    }
-
-    if (type !== uniforms[uniform.name]) {
-      throw new Error(`Uniform type mismatch: ${type} !== ${uniforms[uniform.name]}. For uniform: ${uniform.name}`);
-    }
-
-    uniformsMap[uniform.name] = new Uniform({
-      gl,
-      type,
-      name: uniform.name,
-      program,
-      material,
-    });
-  }
-
-  // Check for any missing uniforms
-  if (uniformsNotFound.size > 0) {
-    throw new Error(`Missing uniforms: ${Array.from(uniformsNotFound).join(", ")}`);
+  for (const [name, type] of Object.entries(uniforms)) {
+    uniformsMap[name] = new Uniform({ gl, name, type, program, material });
   }
 
   return uniformsMap as Uniforms<U>;
