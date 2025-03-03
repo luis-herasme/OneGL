@@ -12,6 +12,7 @@ export class Renderer {
   private readonly textureManager: TextureManager;
 
   constructor(gl: WebGL2RenderingContext) {
+    gl.enable(gl.DEPTH_TEST);
     this.textureManager = new TextureManager(gl);
   }
 
