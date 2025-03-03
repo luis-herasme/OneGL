@@ -28,11 +28,11 @@ export function createWebGLProgram({
     const log = gl.getProgramInfoLog(program);
     gl.deleteProgram(program);
 
-    if (!log) {
+    if (log === null) {
       throw new Error("Failed to link program: no log available");
+    } else {
+      throw new Error(`Failed to link program: ${log}`);
     }
-
-    throw new Error(`Failed to link program: ${log}`);
   }
 
   return program;
@@ -52,11 +52,11 @@ function createShader(gl: WebGL2RenderingContext, type: number, source: string):
     const log = gl.getShaderInfoLog(shader);
     gl.deleteShader(shader);
 
-    if (!log) {
+    if (log === null) {
       throw new Error("Failed to compile shader: no log available");
+    } else {
+      throw new Error(`Failed to compile shader: ${log}`);
     }
-
-    throw new Error(`Failed to compile shader: ${log}`);
   }
 
   return shader;
