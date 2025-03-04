@@ -19,11 +19,13 @@ const material = new Material({
   attributes: {
     position: "vec3",
     texcoord: "vec2",
+    normals: "vec3",
   },
   uniforms: {
     modelMatrix: "mat4",
     projectionMatrix: "mat4",
     cameraInverseMatrix: "mat4",
+    negativeLightDirection: "vec3",
     modelTexture: "sampler2D",
   },
 });

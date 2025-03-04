@@ -1,21 +1,25 @@
 export interface Geometry {
   // Data
   positions: Float32Array;
+  normals: Float32Array;
   indices: Uint16Array;
   uvs: Float32Array;
 
   // Buffers
   positionsBuffer: WebGLBuffer;
+  normalsBuffer: WebGLBuffer;
   indicesBuffer: WebGLBuffer;
   uvsBuffer: WebGLBuffer;
 }
 
 export class QuadGeometry implements Geometry {
   public readonly positions: Float32Array;
+  public readonly normals: Float32Array;
   public readonly indices: Uint16Array;
   public readonly uvs: Float32Array;
 
   public positionsBuffer: WebGLBuffer;
+  public normalsBuffer: WebGLBuffer;
   public indicesBuffer: WebGLBuffer;
   public uvsBuffer: WebGLBuffer;
 
@@ -42,7 +46,16 @@ export class QuadGeometry implements Geometry {
       0, 1   // top-left
     ]);
 
+    // prettier-ignore
+    this.normals = new Float32Array([
+      0, 0, 1,
+      0, 0, 1,
+      0, 0, 1,
+      0, 0, 1
+    ]);
+
     this.positionsBuffer = gl.createBuffer();
+    this.normalsBuffer = gl.createBuffer();
     this.indicesBuffer = gl.createBuffer();
     this.uvsBuffer = gl.createBuffer;
   }
@@ -50,10 +63,12 @@ export class QuadGeometry implements Geometry {
 
 export class BoxGeometry implements Geometry {
   public readonly positions: Float32Array;
+  public readonly normals: Float32Array;
   public readonly indices: Uint16Array;
   public readonly uvs: Float32Array;
 
   public positionsBuffer: WebGLBuffer;
+  public normalsBuffer: WebGLBuffer;
   public indicesBuffer: WebGLBuffer;
   public uvsBuffer: WebGLBuffer;
 
@@ -134,7 +149,47 @@ export class BoxGeometry implements Geometry {
       0, 0,  1, 0,  1, 1,  0, 1
     ]);
 
+    // prettier-ignore
+    this.normals = new Float32Array([
+      // Front face normals
+      0, 0, 1,
+      0, 0, 1,
+      0, 0, 1,
+      0, 0, 1,
+
+      // Back face normals
+      0, 0, -1,
+      0, 0, -1,
+      0, 0, -1,
+      0, 0, -1,
+
+      // Top face normals
+      0, 1, 0,
+      0, 1, 0,
+      0, 1, 0,
+      0, 1, 0,
+
+      // Bottom face normals
+      0, -1, 0,
+      0, -1, 0,
+      0, -1, 0,
+      0, -1, 0,
+
+      // Right face normals
+      1, 0, 0,
+      1, 0, 0,
+      1, 0, 0,
+      1, 0, 0,
+
+      // Left face normals
+      -1, 0, 0,
+      -1, 0, 0,
+      -1, 0, 0,
+      -1, 0, 0
+    ]);
+
     this.positionsBuffer = gl.createBuffer();
+    this.normalsBuffer = gl.createBuffer();
     this.indicesBuffer = gl.createBuffer();
     this.uvsBuffer = gl.createBuffer();
   }

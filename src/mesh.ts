@@ -7,10 +7,12 @@ type MeshMaterial = Material<
   {
     position: "vec3";
     texcoord: "vec2";
+    normals: "vec3";
   },
   {
     projectionMatrix: "mat4";
     cameraInverseMatrix: "mat4";
+    negativeLightDirection: "vec3";
     modelMatrix: "mat4";
   }
 >;
@@ -48,6 +50,7 @@ export class Mesh {
     this.material.uniforms.modelMatrix.set(modelMatrix);
     this.material.uniforms.projectionMatrix.set(camera.projection.data);
     this.material.uniforms.cameraInverseMatrix.set(camera.inverseTransform.data);
+    this.material.uniforms.negativeLightDirection.set([0, 0, -1]);
 
     if (this.binded === false) {
       this.material.attributes.texcoord.set({
@@ -58,6 +61,11 @@ export class Mesh {
       this.material.attributes.position.set({
         value: this.geometry.positions,
         buffer: this.geometry.positionsBuffer,
+      });
+
+      this.material.attributes.normals.set({
+        value: this.geometry.normals,
+        buffer: this.geometry.normalsBuffer,
       });
 
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.geometry.indicesBuffer);
