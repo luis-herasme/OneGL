@@ -32,7 +32,8 @@ const material = new Material({
 
 const texture = await Texture.load({
   gl: canvas.gl,
-  src: "/t1.jpeg",
+  src: "/i.png",
+  type: "RGBA",
 });
 
 material.uniforms.modelTexture.set(texture);
@@ -55,7 +56,7 @@ const camera = new PerspectiveCamera({
 
 const meshes: Mesh[] = [];
 
-const SIZE = 20;
+const SIZE = 6;
 
 for (let x = 0; x < SIZE; x++) {
   for (let y = 0; y < SIZE; y++) {

@@ -13,6 +13,8 @@ export class Renderer {
 
   constructor(gl: WebGL2RenderingContext) {
     gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     this.textureManager = new TextureManager(gl);
   }
 
