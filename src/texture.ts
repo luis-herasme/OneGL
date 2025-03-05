@@ -9,12 +9,18 @@ export class Texture {
     this.texture = texture;
   }
 
-  static async load({ gl, src }: { gl: WebGL2RenderingContext; src: string }) {
+  static async load({ gl, type, src }: { gl: WebGL2RenderingContext; src: string; type: "RGB" | "RGBA" }) {
     const image = await loadImage(src);
     const texture = gl.createTexture();
 
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, image.width, image.height, 0, gl.RGB, gl.UNSIGNED_BYTE, image);
+
+    if (type === "RGBA") {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    } else {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    }
+
     gl.generateMipmap(gl.TEXTURE_2D);
 
     return new Texture(image, texture);
