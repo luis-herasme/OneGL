@@ -57,7 +57,7 @@ export class QuadGeometry implements Geometry {
     this.positionsBuffer = gl.createBuffer();
     this.normalsBuffer = gl.createBuffer();
     this.indicesBuffer = gl.createBuffer();
-    this.uvsBuffer = gl.createBuffer;
+    this.uvsBuffer = gl.createBuffer();
   }
 }
 
