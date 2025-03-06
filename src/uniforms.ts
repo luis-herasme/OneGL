@@ -3,12 +3,9 @@ import { Material } from "./material";
 import { assertNever } from "./utils/assert-never";
 
 class Uniform<T extends UniformTypeLabel> {
-  readonly gl: WebGL2RenderingContext;
   readonly name: string;
   readonly type: T;
-  readonly program: WebGLProgram;
   readonly material: Material;
-
   readonly location: WebGLUniformLocation;
   readonly set: (value: UniformTypeMap[T]) => void;
 
@@ -25,29 +22,27 @@ class Uniform<T extends UniformTypeLabel> {
     program: WebGLProgram;
     material: Material;
   }) {
-    this.gl = gl;
-    this.type = type;
     this.name = name;
-    this.program = program;
+    this.type = type;
     this.material = material;
 
-    this.location = this.getLocation();
-    this.validateUniformCompatibility();
-    this.set = this.createSetterFunction() as (value: UniformTypeMap[T]) => void;
+    this.location = this.getLocation(gl, program);
+    this.validateUniformCompatibility(gl, program);
+    this.set = this.createSetterFunction(gl) as (value: UniformTypeMap[T]) => void;
   }
 
-  private getLocation() {
-    const location = this.gl.getUniformLocation(this.program, this.name);
+  private getLocation(gl: WebGL2RenderingContext, program: WebGLProgram) {
+    const location = gl.getUniformLocation(program, this.name);
 
     if (!location) {
-      throw new Error(`Failed to get uniform location: ${this.name}`);
+      throw new Error(`Failed to get uniform location: ${name}`);
     }
 
     return location;
   }
 
-  private validateUniformCompatibility() {
-    const information = this.getInformation();
+  private validateUniformCompatibility(gl: WebGL2RenderingContext, program: WebGLProgram) {
+    const information = this.getInformation(gl, program);
 
     if (!information) {
       throw new Error(`Failed to get uniform data: ${this.name}`);
@@ -64,11 +59,11 @@ class Uniform<T extends UniformTypeLabel> {
     }
   }
 
-  private getInformation(): WebGLActiveInfo | null {
-    const numUniforms = this.gl.getProgramParameter(this.program, this.gl.ACTIVE_UNIFORMS);
+  private getInformation(gl: WebGL2RenderingContext, program: WebGLProgram): WebGLActiveInfo | null {
+    const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
 
     for (let i = 0; i < numUniforms; i++) {
-      const info = this.gl.getActiveUniform(this.program, i);
+      const info = gl.getActiveUniform(program, i);
 
       if (info && info.name === this.name) {
         return info;
@@ -78,8 +73,8 @@ class Uniform<T extends UniformTypeLabel> {
     return null;
   }
 
-  private createSetterFunction() {
-    const { gl, location, type, material } = this;
+  private createSetterFunction(gl: WebGL2RenderingContext) {
+    const { location, type, material } = this;
 
     // prettier-ignore
     switch (type) {
