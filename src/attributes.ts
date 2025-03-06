@@ -4,45 +4,39 @@ export type Attributes<A extends AttributesDefinitions> = {
 };
 
 class Attribute<T> {
-  readonly gl: WebGL2RenderingContext;
-  readonly name: string;
   readonly type: AttributeTypeLabel;
-  readonly program: WebGLProgram;
   readonly location: number;
   set: (value: BufferOptions<T>) => void;
 
   constructor(gl: WebGL2RenderingContext, name: string, type: AttributeTypeLabel, program: WebGLProgram) {
-    this.gl = gl;
-    this.name = name;
     this.type = type;
-    this.program = program;
 
-    this.location = this.getLocation();
-    this.validateAttributeCompatibility();
-    this.set = getAttributeSetter(this.type)(this.gl, this.location);
+    this.location = this.getLocation(gl, program, name);
+    this.validateAttributeCompatibility(gl, program, name);
+    this.set = getAttributeSetter(this.type)(gl, this.location);
   }
 
-  private getLocation() {
-    const location = this.gl.getAttribLocation(this.program, this.name);
+  private getLocation(gl: WebGL2RenderingContext, program: WebGLProgram, name: string) {
+    const location = gl.getAttribLocation(program, name);
 
     if (location === -1) {
-      throw new Error(`Failed to get attribute location: ${this.name}`);
+      throw new Error(`Failed to get attribute location: ${name}`);
     }
 
     return location;
   }
 
-  private validateAttributeCompatibility() {
-    const attribute = this.gl.getActiveAttrib(this.program, this.location);
+  private validateAttributeCompatibility(gl: WebGL2RenderingContext, program: WebGLProgram, name: string) {
+    const attribute = gl.getActiveAttrib(program, this.location);
 
     if (!attribute) {
-      throw new Error(`Failed to get attribute data: ${this.name}`);
+      throw new Error(`Failed to get attribute data: ${name}`);
     }
 
     const type = getAttributeTypeLabel(attribute.type);
 
     if (type !== this.type) {
-      throw new Error(`Attribute type mismatch: ${this.type} !== ${type}. For attribute: ${this.name}`);
+      throw new Error(`Attribute type mismatch: ${this.type} !== ${type}. For attribute: ${name}`);
     }
   }
 }
