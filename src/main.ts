@@ -62,8 +62,8 @@ for (let x = 0; x < SIZE; x++) {
   for (let y = 0; y < SIZE; y++) {
     for (let z = 0; z < SIZE; z++) {
       const mesh = new Mesh({ material, geometry: box });
-      mesh.translation = { x: SIZE / 2 - x, y: SIZE / 2 - y, z: SIZE + z };
-      mesh.scale = { x: 0.5, y: 0.5, z: 0.5 };
+      mesh.transform.setTranslation(SIZE / 2 - x, SIZE / 2 - y, SIZE + z);
+      mesh.transform.setScale(0.5, 0.5, 0.5);
       meshes.push(mesh);
     }
   }
@@ -77,8 +77,7 @@ function render() {
   camera.transform.rotateZ(0.01);
 
   for (const mesh of meshes) {
-    mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.02;
+    mesh.transform.rotate(0.01, 0.02, 0);
   }
 
   renderer.render(meshes, camera);

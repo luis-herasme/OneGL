@@ -198,7 +198,7 @@ export class Matrix {
     scaleX: number,
     scaleY: number,
     scaleZ: number
-  ): MatrixData {
+  ): Matrix {
     // Precompute cosines and sines for each rotation angle.
     const cx = Math.cos(rotationX);
     const sx = Math.sin(rotationX);
@@ -235,12 +235,12 @@ export class Matrix {
     const m22 = r22 * scaleZ;
 
     // prettier-ignore
-    return [
+    return new Matrix([
       m00, m10, m20, 0,  // Column 0
       m01, m11, m21, 0,  // Column 1
       m02, m12, m22, 0,  // Column 2
       x,   y,   z,   1   // Column 3 (translation)
-    ];
+    ]);
   }
 
   static inverse(m: MatrixData): MatrixData {

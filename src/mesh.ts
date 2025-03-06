@@ -1,5 +1,5 @@
-import { Matrix } from "./matrix";
 import { Material } from "./material";
+import { Transform } from "./transform";
 import { Geometry } from "./primitives";
 import { Camera } from "./camera/camera-interface";
 
@@ -18,10 +18,7 @@ type MeshMaterial = Material<
 >;
 
 export class Mesh {
-  translation = { x: 0, y: 0, z: 0 };
-  rotation = { x: 0, y: 0, z: 0 };
-  scale = { x: 1, y: 1, z: 1 };
-
+  transform: Transform = new Transform();
   material: MeshMaterial;
   geometry: Geometry;
 
@@ -35,17 +32,7 @@ export class Mesh {
   public render(camera: Camera) {
     const gl = this.material.gl;
 
-    const modelMatrix = Matrix.fromTransform(
-      this.translation.x,
-      this.translation.y,
-      this.translation.z,
-      this.rotation.x,
-      this.rotation.y,
-      this.rotation.z,
-      this.scale.x,
-      this.scale.y,
-      this.scale.z
-    );
+    const modelMatrix = this.transform.getMatrix().data;
 
     this.material.uniforms.modelMatrix.set(modelMatrix);
     this.material.uniforms.projectionMatrix.set(camera.projection.data);
